@@ -107,7 +107,7 @@ Re-check the PI-MAX4 gate delay after rewiring if your timing is referenced to t
    while paused, so a forgotten Start is obvious.
 3. **The box boots paused, with count 0.** Counting starts only when you press Start.
 4. **Holdoff** (dead time) is configurable, default 1 ms. That's fine up to ~500 Hz.
-5. **Plain-text serial protocol**, debuggable from any serial terminal:
+5. **Plain-text serial protocol**, debuggable from any serial terminal. Full spec: [docs/protocol.md](docs/protocol.md).
 
    | PC → box | Meaning |
    |---|---|
@@ -118,9 +118,9 @@ Re-check the PI-MAX4 gate delay after rewiring if your timing is referenced to t
 
    | Box → PC | Meaning |
    |---|---|
-   | `EVT <count> <t_us> <counted 0/1>` | one per detected pulse |
-   | `STAT <running> <count> <thr_mV> <hold_us> <bias_mV_readback> <thr_mV_readback>` | 1 Hz heartbeat |
-   | `OK` / `ERR <msg>` | command replies |
+   | `EVT count=… t=… counted=0/1` | one per detected pulse |
+   | `STAT running=… count=… thr=… hold=… t=… bias=… thr_meas=…` | state, at 1 Hz and after every command |
+   | `OK <cmd>` / `ERR <msg>` | command replies |
 
 6. **App: Python + PySide6 (Qt)**, packaged as a single `.exe`. It includes a **simulator** so the UI can be built and tested before the hardware arrives.
 
@@ -177,11 +177,11 @@ With the camera connected as normal, scope the photodiode line at the camera end
 - [ ] Laser model and rep rate (sets the default holdoff)
 - [ ] With the beam blocked and the laser firing: any EMI spikes on the line?
 
-### Phase 1: App and simulator (start now, no hardware)
-- [ ] `docs/protocol.md`
-- [ ] `device.py`: `SerialDevice` and `SimulatedDevice`
-- [ ] `ui.py`: layout above. Count, shots/s, Start/Pause, Reset with confirm, threshold control, trigger indicator, paused-but-seeing-pulses banner
-- [ ] Settings persistence and unit tests against the simulator
+### Phase 1: App and simulator ✅ done (see [app/README.md](app/README.md))
+- [x] `docs/protocol.md`
+- [x] `device.py`: serial and simulator transports behind one interface; `simulator.py` mimics the firmware
+- [x] `ui.py`: count, shots/s, Start/Pause, Reset with confirm, threshold + holdoff, trigger indicator, paused-but-seeing-pulses banner, light/dark
+- [x] Settings persistence and tests (34, including an end-to-end UI test against the simulator)
 
 ### Phase 2: Firmware (Pico on its own)
 - [ ] MicroPython: latch IRQ → timestamp → count → holdoff → clear latch

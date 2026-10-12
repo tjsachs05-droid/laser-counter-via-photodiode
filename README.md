@@ -9,3 +9,11 @@ I normally will be in situ taking pictures of the plasma plume created by the la
 what do I need to convert the BNC cable voltage pulse into a usable signal for the computer, rasberry pi perhaps? simplest is best. 
 
 software display theme should be professionally minimal / clean but readable above all 
+
+---
+
+## Where things are
+- [PLAN.md](PLAN.md): design, signal chain, phases, risks
+- [BOM.md](BOM.md): parts and where to buy them
+- [app/](app/README.md): desktop app. Try it now with the built-in simulator, no hardware needed.
+- [docs/protocol.md](docs/protocol.md): the serial protocol between the app and the counter box

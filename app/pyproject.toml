@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "laser-counter"
+version = "0.1.0"
+description = "Live laser ablation shot counter for the photodiode + Raspberry Pi Pico counter box"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["PySide6-Essentials>=6.7", "pyserial>=3.5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.gui-scripts]
+laser-counter = "laser_counter.__main__:main"
+
+[tool.setuptools]
+packages = ["laser_counter"]
+
+[tool.setuptools.package-data]
+laser_counter = ["assets/*.svg"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
