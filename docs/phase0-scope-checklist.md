@@ -29,8 +29,15 @@ SM05PD2B ─SMA→BNC─ cable ─► [BNC tee on scope CH1] ─► cable ─►
                               scope CH1 set to 1 MΩ
 ```
 
-**Option B: camera off or not available.** Run the cable straight into the scope and set CH1 to **50 Ω**.
-That stands in for the camera's 50 Ω input.
+**Option B: camera off or not available.** The line still needs a 50 Ω load, or the pulse stretches out
+(from ns to µs) and the measurements mean nothing. If your scope has a 50 Ω input setting, run the cable straight
+in and use it. **The TDS1001B (and most basic scopes) can't do this: they're 1 MΩ only.** Instead, keep the tee
+and put a **50 Ω BNC terminator** on the tee's free side, in place of the camera.
+
+**Tektronix TDS1001B notes:** DEFAULT SETUP resets the probe to **10X**, so set CH1 MENU → Probe → **1X** again
+afterward. There are no measurement statistics, so use DISPLAY → Persist → Infinite and the cursors to read the
+weakest and strongest shots. Use ACQUIRE → **Peak Detect** so narrow pulses aren't missed at slow sweep speeds.
+Screenshots: insert a USB stick and press PRINT (the green SAVE light means PRINT saves an image).
 
 ⚠ **Never use the tee and the camera with the scope set to 50 Ω.** Two 50 Ω loads cut the signal to 2/3,
 the camera may miss triggers, and the numbers will be wrong.
