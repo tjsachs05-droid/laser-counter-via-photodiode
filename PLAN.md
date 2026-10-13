@@ -57,9 +57,9 @@ Ordering list with part numbers and sources: **[BOM.md](BOM.md)**
  │       │                                   │                                      │
  │       └─ 10 nF C0G ──┬──── 10k ───────────┘                                      │
  │                      │                                                           │
- │                     330 Ω                                                        │
- │                      ├─ BAT85 → 3V3   (clamp high)                               │
- │                      ├─ BAT85 ← GND   (clamp low)                                │
+ │                     100 Ω                                                        │
+ │                      ├─ BAT41 → 3V3   (clamp high)                               │
+ │                      ├─ BAT41 ← GND   (clamp low)                                │
  │                      └──► TLV3501 IN−                                            │
  │   MCP4728 ch B ─ 1k ─┬──► TLV3501 IN+   (threshold = 1.500 V − |Vthr|)           │
  │                    100 nF                                                        │

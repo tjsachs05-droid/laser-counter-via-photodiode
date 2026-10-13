@@ -32,14 +32,14 @@ below costs $4.81 and mounts in a simple drilled hole.
 | 2 | **PA0003** | Chip Quik SOIC-14 → DIP adapter | $3.49 | 869 | For the flip-flop |
 | 1 | **4470** (Adafruit) | MCP4728 4-ch 12-bit I²C DAC breakout, internal 2.048 V reference | $7.50 | 739 | Bias (ch A) and threshold (ch B) |
 | 1 | **031-10-RFXG1** | Amphenol RF BNC jack, 50 Ω, panel mount, solder cup | $4.81 | 9,516 | Box input (check the datasheet for the panel hole size) |
-| 4 | **BAT85S-TR** | Vishay Schottky diode, DO-35 through-hole | $0.50 | 45,358 | Input clamps (2 used) |
+| 4 | **BAT41-TR** | Vishay Schottky diode, DO-35 through-hole, **2 pF** | $0.50 | 20,869 | Input clamps (2 used). Low capacitance keeps ns pulses sharp; replaces BAT85 (10 pF). |
 | 2 | **FG28C0G1H103JNT06** | TDK 10 nF C0G 50 V radial | $0.38 | 26,971 | AC-coupling cap |
 | 10 | **FG18X7R1H104KNT06** | TDK 100 nF X7R 50 V radial | *(unverified)* | *(unverified)* | Decoupling + threshold filter. Any 100 nF ceramic works. |
 | 2 | **FG24X7R1A106KRT06** | TDK 10 µF X7R 10 V radial | *(unverified)* | *(unverified)* | 3V3 bulk decoupling. Any 10 µF ceramic works. |
 | 5 | **CF14JT100K** | 100 kΩ ¼ W | ~$0.10 | *(unverified)* | Input bleed |
 | 5 | **CF14JT10K0** | 10 kΩ ¼ W | $0.10 | in stock | Bias resistor |
 | 5 | **CF14JT1K00** | 1 kΩ ¼ W | ~$0.10 | *(unverified)* | Threshold RC filter |
-| 5 | **CF14JT330R** | 330 Ω ¼ W | ~$0.10 | *(unverified)* | Comparator input series resistor |
+| 5 | **CF14JT100R** | 100 Ω ¼ W | ~$0.10 | *(unverified)* | Comparator input series resistor |
 | 1 | **3258** (Adafruit) | Panel-mount micro-USB extension, 1 ft | $4.95 | 2,054 | Clean USB port on the end cap (optional; a grommeted hole works too) |
 | 2 | **1609** (Adafruit) | Perma-Proto half-size board | $4.50 | **11 (low)** | Circuit board. If DigiKey runs out, order it from adafruit.com. |
 
@@ -52,14 +52,14 @@ below costs $4.81 and mounts in a simple drilled hole.
 2,PA0003
 1,1528-4470-ND
 1,031-10-RFXG1
-4,BAT85S-TR
+4,BAT41-TR
 2,FG28C0G1H103JNT06
 10,FG18X7R1H104KNT06
 2,FG24X7R1A106KRT06
 5,CF14JT100K
 5,CF14JT10K0
 5,CF14JT1K00
-5,CF14JT330R
+5,CF14JT100R
 1,1528-3258-ND
 2,1528-1609-ND
 ```
