@@ -68,7 +68,7 @@ Ordering list with part numbers and sources: **[BOM.md](BOM.md)**
  │   74LVC74 Q   ──► Pico GP2   (rising edge = one shot)                            │
  │   74LVC74 CLR ◄── Pico GP3   (Pico re-arms the latch after the holdoff)          │
  │   MCP4728 SDA/SCL ◄─► Pico GP4/GP5 (I²C)                                         │
- │   Pico GP26/27 (ADC) ◄── DAC ch B / ch A   (readback, sanity check)              │
+ │   Pico GP26/27 (ADC) ◄── DAC ch A / ch B   (readback, sanity check)              │
  │   Pico 3V3(OUT) powers the comparator, latch, and DAC (< 5 mA total)            │
  │                                                                                  │
  └─────────────────────────────────── USB ──► lab PC (display app) ─────────────────┘
@@ -78,6 +78,8 @@ How it works: the pulse dips the comparator input below the threshold, and the c
 high for a few ns. The latch catches that edge and holds it, the Pico counts it and timestamps it in
 µs, then after the holdoff (default 1 ms) it clears the latch. Ringing or EMI during the holdoff can't
 double count.
+
+Exact pin-by-pin connections, and what the datasheet check confirmed: [docs/hardware.md](docs/hardware.md).
 
 The camera's signal is unaffected: the tap adds ~10 kΩ in parallel with the camera's 50 Ω (< 1%
 loading). **Note:** the new 3 ft cable adds ~4.6 ns of delay to the camera trigger (RG-58 ≈ 1.5 ns/ft).
@@ -213,7 +215,7 @@ With the camera connected as normal, scope the photodiode line at the camera end
 |---|---|
 | Pulse barely exceeds −0.4 V, so the camera triggers marginally | Not caused by the counter, but Phase 0 will show it. The counter can run a lower threshold than the camera if you want to count every shot regardless. |
 | Laser discharge EMI | Aluminum box, comparator hysteresis (6 mV built in), holdoff, beam-blocked test |
-| Ground loop (camera / PC / laser) | Keep the BNC shield bonded to the box. If noisy, add a USB isolator (~$20). |
+| Ground loop (camera / PC / laser) | Box bonded to circuit ground with one ring lug; the BNC jack is isolated, so the box doesn't add a second ground path. If noisy, add a USB isolator (~$20). |
 | Fast comparator oscillates near threshold | Built-in hysteresis, 100 nF decoupling right at the pins, short leads. No solderless breadboard for the final build. |
 | Cable added to the camera path shifts trigger timing | Re-zero the gate delay once (Phase 4) |
 
