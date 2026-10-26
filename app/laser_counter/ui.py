@@ -71,7 +71,7 @@ class PortCombo(QComboBox):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, settings: QSettings | None = None, sim_rate_hz: float = 10.0):
+    def __init__(self, settings: QSettings | None = None, sim_rate_hz: float = 5.0):
         super().__init__()
         self.settings = settings if settings is not None else QSettings()
         self.sim_rate_hz = sim_rate_hz
@@ -191,7 +191,9 @@ class MainWindow(QMainWindow):
         self.threshold_spin.setValue(self.settings.value("threshold_mv", DEFAULT_THRESHOLD_MV, type=int))
         self.threshold_spin.valueChanged.connect(lambda _value: self._threshold_timer.start())
         self.threshold_spin.editingFinished.connect(self.threshold_spin.clearFocus)
-        self.threshold_meas = QLabel(objectName="muted", toolTip="Threshold as measured inside the box")
+        self.threshold_meas = QLabel(
+            objectName="muted", toolTip="Threshold as measured inside the box (approximate, about ±15 mV)"
+        )
         self.holdoff_spin = QDoubleSpinBox(
             minimum=p.HOLD_MIN_US / 1000,
             maximum=p.HOLD_MAX_US / 1000,
@@ -385,7 +387,7 @@ class MainWindow(QMainWindow):
                 self._set_count(message.count)
                 self._set_running(message.running)
                 if message.thr_meas_mv is not None:
-                    self.threshold_meas.setText(_minus(f"measured {message.thr_meas_mv:.0f} mV"))
+                    self.threshold_meas.setText(_minus(f"measured ≈ {message.thr_meas_mv:.0f} mV"))
             case p.Ident():
                 self.conn_label.setText(f"{self.device.label}  ·  firmware {message.firmware}")
             case p.Error():

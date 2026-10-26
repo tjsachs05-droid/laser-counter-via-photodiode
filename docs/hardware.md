@@ -107,9 +107,11 @@ For *why* each part is there, see the explanation in [PLAN.md §2](../PLAN.md).
 2. The firmware sets the DAC (1.500 V bias, threshold), waits ~10 ms for C1 and C2 to settle, **then** releases CLR.
 3. From then on, every rising edge from the comparator sets the latch exactly once until the Pico clears it.
 
-## Notes for the firmware (Phase 2)
-- Set the Pico's GP23 high. This puts its power regulator in a lower-ripple mode, giving the comparator a quieter 3.3 V.
-- Count on the rising-edge interrupt from GP2, but **also** check GP2's level in the main loop. If an edge were ever missed, Q would stay high and counting would stop.
-- Save the bias and the default threshold in the MCP4728's EEPROM (its own memory), so its outputs come up sensible even before the firmware runs.
+## How the firmware handles this ([firmware/main.py](../firmware/main.py))
+- Sets the Pico's GP23 high, putting its power regulator in a lower-ripple mode so the comparator gets a quieter 3.3 V.
+- Counts on a rising-edge interrupt from GP2. Once a second it **also** checks GP2's level, so if an edge were ever
+  missed (Q stuck high), the shot is still counted and the latch re-armed.
+- Doesn't use the MCP4728's EEPROM (its built-in memory). The power-up sequence above already keeps the latch cleared until the DAC is set.
 - The ADC readback of VA and VB is a **sanity check**, accurate to roughly ±10–20 mV, not a calibration. For a precise threshold,
   measure VA − VB once with the Keithley 2000 and store a correction.
+- **GP15** outputs test pulses for bench testing (`TEST` command). Leave it unconnected in the finished box.

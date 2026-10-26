@@ -15,8 +15,10 @@ terminal (PuTTY, Thonny, `python -m serial.tools.miniterm COM5`).
 | `RESET` | Set the count to 0. Running/paused state is unchanged. | `OK RESET`, then `STAT …` |
 | `THR <mV>` | Trigger threshold, integer mV relative to the 0 V baseline, from **-1400 to -5** | `OK THR <mV>`, then `STAT …` |
 | `HOLD <µs>` | Holdoff (dead time) after each detected pulse, integer µs, from **10 to 1000000** | `OK HOLD <µs>`, then `STAT …` |
+| `TEST <Hz>` | *Bench testing only.* Output a 20 µs test pulse on GP15 at this rate, 0–1000 (0 = off). The app never sends it. | `OK TEST <Hz>` |
 
-Anything else gets `ERR <message>`.
+Anything else gets `ERR <message>`. If the DAC board isn't found, `THR` still stores the value but replies
+`ERR DAC not found; …`, then `STAT …`.
 
 ## Box → app
 
@@ -42,6 +44,7 @@ STAT running=1 count=1234 thr=-400 hold=1000 t=98765432 bias=1500.3 thr_meas=-39
 | `thr` | Threshold setting, mV |
 | `hold` | Holdoff setting, µs |
 | `t` | Box time now, µs since power-up |
+| `dac` | *(optional)* `1` if the DAC board answered on I²C, `0` if not |
 | `bias` | *(optional)* Measured bias voltage, mV (should be ≈ 1500) |
 | `thr_meas` | *(optional)* Measured threshold relative to bias, mV (should be ≈ `thr`) |
 

@@ -14,7 +14,7 @@ from .ui import DISPLAY_FONTS, SIMULATOR, MainWindow
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="laser-counter", description="Live laser ablation shot counter.")
     parser.add_argument("--simulate", action="store_true", help="connect to the built-in pretend laser")
-    parser.add_argument("--sim-rate", type=float, default=10.0, metavar="HZ", help="simulated rep rate (default 10)")
+    parser.add_argument("--sim-rate", type=float, default=5.0, metavar="HZ", help="simulated rep rate (default 5)")
     parser.add_argument("--port", help="serial port of the counter box, e.g. COM5")
     args = parser.parse_args(argv)
 

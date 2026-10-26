@@ -185,10 +185,11 @@ With the camera connected as normal, scope the photodiode line at the camera end
 - [x] `ui.py`: count, shots/s, Start/Pause, Reset with confirm, threshold + holdoff, trigger indicator, paused-but-seeing-pulses banner, light/dark
 - [x] Settings persistence and tests (34, including an end-to-end UI test against the simulator)
 
-### Phase 2: Firmware (Pico on its own)
-- [ ] MicroPython: latch IRQ → timestamp → count → holdoff → clear latch
-- [ ] MCP4728 driver (bias + threshold), ADC readback, command parser, 1 Hz heartbeat
-- [ ] Test with the real app over USB
+### Phase 2: Firmware (Pico on its own). Bench steps: [firmware/README.md](firmware/README.md)
+- [x] MicroPython: latch IRQ → timestamp → count → holdoff → clear latch, plus a missed-edge check
+- [x] MCP4728 driver (bias + threshold), ADC readback, command parser, 1 Hz heartbeat, `TEST` pulses on GP15
+- [x] 13 tests against a simulated Pico, including the 18-minute tick wraparound and app-protocol compatibility
+- [ ] On the real Pico: flash, terminal check, jumper GP15 → GP2, then the app at 5 shots/s
 
 ### Phase 3: Front end (bench)
 - [ ] Solder the TLV3501 and 74LVC74A onto their DIP adapters, then build on the perma-proto board with short leads and a solid ground
