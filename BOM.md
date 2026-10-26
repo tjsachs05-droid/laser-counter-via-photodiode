@@ -54,7 +54,7 @@ what each datasheet confirmed. Changes from the first BOM:
 | 2 | **PPTC201LFBN-RC** | Sullins 20-pin female header | ~$1.15 | *(unverified)* | Socket so the Pico H plugs in and can be swapped |
 | 2 | **1609** (Adafruit) | Perma-Proto half-size board, 3.2" × 2" | $4.50 | **~11 (low)** | Board A: Pico + DAC. Board B: input stage + comparator + latch. Backup source: adafruit.com |
 | 1 | **031-10-RFXG1** | Amphenol RF BNC jack, 50 Ω, **isolated**, nut on the inside | $4.81 | 9,516 | Box input. ⚠ See the hole note below. |
-| 1 | **31-10152-RFX** | Amphenol solder tag for BNC jacks | $1.39 | 3,129 | Needed: the jack is isolated, so this tag is how its shield connects to ground |
+| 1 | **31-10152-RFX** | Amphenol solder tag for BNC jacks | $1.39 | 3,129 | Ground connection for the jack's shield. The drawing shows a built-in ground tab too, so this is likely a spare. |
 | 1 | **3258** (Adafruit) | Panel-mount micro-USB extension, 1 ft, M3 screws included | $4.95 | 2,054 | USB port on the end cap; protects the Pico's fragile micro-USB socket |
 | 1 | **3299** (Adafruit) | Nylon M2.5 standoff, screw and nut kit | ~$16 *(unverified)* | *(unverified)* | Holds both boards off the metal box. Skip if the lab has nylon standoffs. |
 | 1 | **USBAUB2MLA** | StarTech USB-A to micro-B **data** cable, 2 m | $14.67 | 16 | Box to PC. Skip if the lab has one, but it must be a **data** cable; charge-only cables won't work. |
@@ -90,16 +90,22 @@ Some DigiKey listings note "Tariff may apply if shipping to the United States." 
 also shows live stock for every line, including the ones marked *(unverified)* above.
 
 ### ⚠ Before drilling the BNC hole
-Amphenol's drawing for this jack wouldn't download, so these numbers come from Amphenol's catalog table for the
-31-10 series: a **≈12 mm (15/32") hole** and a **panel up to ~1/8" (3.2 mm) thick**. When the box arrives, measure the
-end-cap thickness and test-fit the jack in a scrap hole (or check the hole with the jack in hand) before drilling the real one.
+From Amphenol's drawing (31-10-RFXG1), the recommended hole is a **"D" hole: 9.7 mm (0.382") round, with one
+flat 8.85 mm (0.348") across**. The flat stops the jack from turning. The jack's threaded section fits a panel up to about
+**1/8" (3.2 mm)** thick once the nut and lock washer are on.
+1. Drill **3/8" (9.5 mm)**. Open it out slightly with a round file until the jack's threads just pass through.
+2. File one straight flat so the jack drops in and can't spin.
+3. Measure the end-cap thickness first. Practicing the hole on scrap aluminum is worth it.
+
+The drawing also shows a **ground tab built into the back of the jack**, so the separate solder tag (31-10152-RFX)
+is probably just a spare. Use whichever fits better.
 
 ---
 
 ## Probably already in the lab
 - 22 AWG **solid** hookup wire in a few colors (Adafruit 1311 if not)
 - Solder, flux pen, solder wick, fine-tip iron, tweezers, magnifier (for the SOIC chips)
-- Drill and bits (≈3 mm for standoffs and M3 screws, ≈12 mm or a step bit for the BNC jack); a small file
+- Drill and bits (≈3 mm for standoffs and M3 screws, 3/8" for the BNC jack), plus a small round file and a flat file
 - A ring lug for one end-cap screw, to bond the box to circuit ground (scrape any anodizing under it)
 - Oscilloscope, BNC cables, a BNC 50 Ω terminator, and a function generator that can make short negative pulses (Phase 0 and 3)
 - Keithley 2000 multimeter (you have one) for checking the threshold voltage during setup

@@ -31,7 +31,8 @@ For *why* each part is there, see the explanation in [PLAN.md §2](../PLAN.md).
 
 **Input stage (board B)**
 - J1 center pin → node **IN** (keep this wire under ~5 cm, twisted with a ground wire)
-- J1 solder tag (shield) → GND
+- J1 ground tab (shield) → GND. Use the jack's built-in rear tab, or the separate solder tag under the nut.
+- J1 panel hole: 9.7 mm D-hole with an 8.85 mm flat (see [BOM.md](../BOM.md))
 - R1: IN → GND
 - C1: IN → node **BIAS**
 - R2: BIAS → DAC **VA**
