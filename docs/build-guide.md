@@ -145,8 +145,9 @@ USB end toward row 1. Every pin should be in the socket, none hanging off the en
    - `bias=` about **1500** and `thr_meas=` about **−400** (the Pico's own rough readback, ±20 mV is fine)
    - `ID?` should answer `fw=0.2.0`
 3. **Keithley 2000** on DC volts. Black lead on ground (any −R rail hole), red lead on:
-   - the DAC **VA** row → **1.500 V** (within a few mV)
-   - the DAC **VB** row → **1.100 V**
+   - the DAC **VA** row → **1.500 V** (typically within a few mV; up to ±20 mV is still within the DAC's spec)
+   - the DAC **VB** row → **1.100 V** (same tolerance)
+   - Write both readings down. The threshold the box really uses is VB − VA, which is −400 mV when everything is ideal.
 4. Type `THR -250` → VB should become **1.250 V**. `THR -700` → **0.800 V**. Then `THR -400` to go back.
    VB is the threshold; the comparator compares the signal against it. Your multimeter just watched you move it.
 5. Leave the terminal (Ctrl + ]) and unplug the USB.
@@ -158,12 +159,17 @@ If `dac=0`: see Troubleshooting.
 ## Stage 3: Board B (input stage, comparator, latch)
 
 ### 3a. Mount the two adapters
-1. Push the two **7-pin** strips (long ends down) into board B **rows 19–25**, one strip in **column e**, one in **column f**.
+Your adapters (PA0001, PA0003, the standard size, not the "C" compact ones) almost certainly have their two pin rows
+**0.6" apart**, so their pins go in **columns c and g**, as drawn. Check before soldering: hold an adapter over the board
+with one pin row over column c. The other row should line up with column g. (If instead the rows are only 0.3" apart,
+fitting e and f across the centre gap, use **e and f**. All the connections below still work, because they only use holes
+**a, b** on the left and **i, j** on the right.)
+
+1. Push the two **7-pin** strips (long ends down) into board B **rows 19–25**, one strip in **column c**, one in **column g**.
    Set the latch adapter (PA0003) on top with **pin 1 at row 19, left side**. Solder the pins on top of the adapter, then flip the
    board and solder them underneath.
-2. Same for the comparator adapter (PA0001): two **4-pin** strips in **rows 11–14**, columns e and f, **pin 1 at row 11, left side**.
-3. If your adapters' two pin rows are **wider apart** than columns e–f allow, put the pins in **columns c and g** instead.
-   Everything else stays the same, because all the connections below use only holes **a, b** (left) and **i, j** (right).
+2. Same for the comparator adapter (PA0001): two **4-pin** strips in **rows 11–14**, columns c and g, **pin 1 at row 11, left side**.
+3. The adapter boards cover holes c–g in their rows. That's expected; nothing else goes in those holes.
 
 Pin layout once mounted (pin 1 top-left, numbers go down the left and back up the right):
 
@@ -258,8 +264,10 @@ USB unplugged, boards **not** connected yet. Multimeter on board B only.
 | R2 | L2 to L6 | ≈ 10 kΩ |
 | R3 | L6 to L8 | ≈ 100 Ω |
 | R4 | L16 to L13 | ≈ 1 kΩ |
-| D2 direction | diode mode: red on − rail, black on L8 | ≈ 0.2–0.4 V. Swap the probes → "OL". |
-| D1 direction | diode mode: red on L8, black on + rail | ≈ 0.2–0.4 V. Swap → "OL". |
+| D2 direction | diode mode: red on − rail, black on L8 | ≈ 0.2–0.4 V. Swap the probes → noticeably higher (OL, or above ~1 V; the chips can give a reading here). |
+| D1 direction | diode mode: red on L8, black on + rail | ≈ 0.2–0.4 V. Swap → noticeably higher. |
+
+If a diode reads ≈ 0.2–0.4 V the *wrong* way round and high the right way, it's in backwards. Fix it before going on.
 
 Anything that doesn't match: fix it now. It's much easier than after power-up.
 

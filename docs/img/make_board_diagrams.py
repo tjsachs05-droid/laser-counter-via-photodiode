@@ -98,21 +98,21 @@ def part(svg, a, b, kind, label, color=BROWN, label_dx=0, label_dy=0, dashed=Fal
 
 
 def chip(svg, rows, name, left_pins, right_pins):
-    """A DIP adapter straddling the center gap with its pins in columns e and f, pin 1 at top left."""
+    """A DIP adapter straddling the center gap with its pins in columns c and g (0.6" rows), pin 1 at top left."""
     first, last = rows
-    x1, y1 = xy("e", first)
-    x2, y2 = xy("f", last)
-    svg.add(f'<rect x="{x1 - 6}" y="{y1 - 12}" width="{x2 - x1 + 12}" height="{y2 - y1 + 24}" rx="4" fill="#2F3A2F" opacity="0.92"/>')
-    svg.add(f'<circle cx="{x1 + 6}" cy="{y1 - 5}" r="3" fill="#fff"/>')
-    svg.text((x1 + x2) / 2, y1 - 22, name, 12, "middle", "#2F3A2F", "700")
+    x1, y1 = xy("c", first)
+    x2, y2 = xy("g", last)
+    svg.add(f'<rect x="{x1 - 0.5 * P}" y="{y1 - 0.5 * P}" width="{x2 - x1 + P}" height="{y2 - y1 + P}" rx="4" fill="#2F3A2F" opacity="0.92"/>')
+    svg.add(f'<circle cx="{x1 + 6}" cy="{y1 - 6}" r="3" fill="#fff"/>')
+    svg.text((x1 + x2) / 2, y1 - 0.5 * P - 10, name, 12, "middle", "#2F3A2F", "700")
     for i, label in enumerate(left_pins):
-        x, y = xy("e", first + i)
+        x, y = xy("c", first + i)
         svg.add(f'<rect x="{x - 4}" y="{y - 4}" width="8" height="8" fill="#C0C0C0"/>')
-        svg.text(x + 9, y, label, 8.5, "start", "#E8F0E8")
+        svg.text(x + 9, y, label, 9, "start", "#E8F0E8")
     for i, label in enumerate(right_pins):
-        x, y = xy("f", first + i)
+        x, y = xy("g", first + i)
         svg.add(f'<rect x="{x - 4}" y="{y - 4}" width="8" height="8" fill="#C0C0C0"/>')
-        svg.text(x - 9, y, label, 8.5, "end", "#E8F0E8")
+        svg.text(x - 9, y, label, 9, "end", "#E8F0E8")
 
 
 def offboard(svg, hole, side, label, color, dashed=False):
@@ -198,18 +198,18 @@ def board_b():
          ["14 VCC", "13 2CLR", "12 2D", "11 2CLK", "10 2PRE", "9 2Q", "8 2Q̄"])
     # Node labels
     for row, name in ((2, "VA in"), (4, "IN"), (6, "BIAS"), (8, "CMP"), (16, "VB in")):
-        svg.text(xy("e", row)[0] + 14, xy("e", row)[1] - 9, name, 10.5, "start", "#7A3E00", "700")
+        svg.text(xy("e", row)[0] + 12, xy("e", row)[1] - 9, name, 10.5, "start", "#7A3E00", "700")
     # Input network
     offboard(svg, ("a", 2), "left", "VA from board A", ORANGE)
     offboard(svg, ("a", 4), "left", "BNC centre pin (J1)", BLACK)
     offboard(svg, ("-L", 5), "left", "BNC ground tab (J1)", BLACK)
     part(svg, ("b", 4), ("-L", 4), "R", "R1 100k", label_dy=12)
     part(svg, ("c", 4), ("c", 6), "C", "C1 10n", label_dx=-32)
-    part(svg, ("d", 2), ("d", 6), "R", "R2 10k", label_dx=22, label_dy=-16)
+    part(svg, ("d", 2), ("d", 6), "R", "R2 10k", label_dx=22, label_dy=-26)
     part(svg, ("b", 6), ("b", 8), "R", "R3 100", label_dx=-24)
     part(svg, ("a", 8), ("+L", 8), "D", "D1", label_dy=-11)
     part(svg, ("-L", 9), ("c", 8), "D", "D2", label_dy=12)  # stripe (cathode) at CMP
-    wire(svg, [("d", 8), ("d", 10.5), ("b", 10.5), ("b", 12)], PURPLE)
+    wire(svg, [("d", 8), ("d", 9.5), ("b", 9.5), ("b", 12)], PURPLE)
     # Threshold
     offboard(svg, ("a", 16), "left", "VB from board A", BLUE)
     part(svg, ("b", 16), ("b", 13), "R", "R4 1k", label_dx=-22)
