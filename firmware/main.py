@@ -32,6 +32,7 @@ TEST_MAX_HZ = 1000
 STATUS_PERIOD_MS = 1000
 LED_ON_MS = 50
 TEST_PULSE_US = 20
+BENCH_TEST_HZ = 5  # test pulse rate when the GP15-GP2 bench jumper is fitted at power-up
 
 micropython.alloc_emergency_exception_buf(100)
 
@@ -93,6 +94,20 @@ class Dac:
         except OSError:
             self.ok = False
         return self.ok
+
+
+def bench_jumper_present(test, q):
+    """True if GP15 is wired straight to GP2 (bench-test jumper). Call before the edge interrupt is on.
+
+    In the finished box GP15 is unconnected and Q is held low by the cleared latch, so this is always False there.
+    """
+    for level in (1, 0, 1, 0):
+        test.value(level)
+        time.sleep_us(50)
+        if q.value() != level:
+            test.value(0)
+            return False
+    return True
 
 
 def read_mv(adc, samples=16):
@@ -259,8 +274,12 @@ def main():
         adc_bias=ADC(Pin(PIN_ADC_BIAS)),
         adc_thr=ADC(Pin(PIN_ADC_THR)),
     )
+    bench = bench_jumper_present(_test_out, box.q)
     box.start()
     print("ID laser-counter fw=" + FW_VERSION)
+    if bench:
+        box.set_test(BENCH_TEST_HZ)
+        print("OK TEST {}".format(BENCH_TEST_HZ))
     print(box.status())
 
     poller = select.poll()

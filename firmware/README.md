@@ -69,6 +69,16 @@ The app finds the Pico on its own. Check that:
 
 The test pulses keep running until you send `TEST 0` or unplug the Pico. Remove the jumper when you're done.
 
+**Bench mode:** if the GP15–GP2 wire is already connected when the Pico powers up, the firmware detects it and starts
+5 Hz test pulses by itself (it prints `OK TEST 5`). That way the app alone is enough to test, with no terminal needed.
+In the finished box GP15 is never connected, so this can't happen there.
+
+## Testing on a computer without Python
+Use **Thonny** (thonny.org; the Windows installer can install "for me only", which needs no admin rights). It can install
+MicroPython (Tools → Options → Interpreter → *Install or update MicroPython*), copy `main.py` onto the Pico
+(File → Save as → Raspberry Pi Pico), and act as the terminal (Run, then type commands in its Shell). For the app,
+copy `dist/LaserShotCounter.exe` across. **Close Thonny before starting the app**, since only one program can use the port.
+
 ## Updating the firmware later
 Close the app (it holds the port), then repeat step 2. If mpremote can't connect, unplug and replug the Pico and try again.
 

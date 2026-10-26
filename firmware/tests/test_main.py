@@ -268,6 +268,26 @@ def test_commands_match_the_protocol():
     assert rig.send("") == []
 
 
+class Follower:
+    """GP2 wired straight to another pin (the bench jumper)."""
+
+    def __init__(self, source):
+        self.source = source
+
+    def value(self, v=None):
+        return self.source.value()
+
+
+def test_bench_jumper_detected_only_when_fitted():
+    rig = Rig()
+    gp15 = FakePin()
+    assert rig.fw.bench_jumper_present(gp15, Follower(gp15))
+    assert gp15.value() == 0
+    lonely = FakePin()
+    assert not rig.fw.bench_jumper_present(lonely, FakePin())  # nothing on GP2, as in the finished box
+    assert lonely.value() == 0
+
+
 def test_test_pulse_timer():
     rig = Rig()
     assert rig.send("TEST 5") == ["OK TEST 5"]
