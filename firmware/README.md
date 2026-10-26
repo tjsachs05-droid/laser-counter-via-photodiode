@@ -38,7 +38,7 @@ Open a simple serial terminal (replace COM5):
 You'll see a `STAT …` line every second. Type these, pressing Enter after each:
 - `ID?` → `ID laser-counter fw=0.1.0`
 - `STATUS?` → `STAT running=0 count=0 thr=-400 hold=1000 t=… dac=0`. `dac=0` is expected, since the DAC board isn't connected yet.
-- `TEST 5` → `OK TEST 5`. The Pico now outputs a short test pulse 5 times a second on **GP15**.
+- `TEST 5` → `OK TEST 5`. The Pico now outputs a short test pulse 5 times a second on **GP11**.
 
 ### 4. Feed the test pulses into the input
 Hold the Pico with the USB connector pointing up and the chip side facing you. The **left** column of pins
@@ -46,10 +46,10 @@ is 1–20 from top to bottom.
 
 | Connect | Pin | Position |
 |---|---|---|
-| **GP15** (test pulse out) | **pin 20** | bottom of the left column |
+| **GP11** (test pulse out) | **pin 15** | 15th pin on the left column, same edge as GP2 |
 | **GP2** (counter input) | **pin 4** | 4th from the top on the left; pin 3 just above it is GND, so skip it |
 
-Jumper pin 20 to pin 4. In the terminal:
+Jumper pin 15 to pin 4. In the terminal:
 - `EVT count=0 t=… counted=0` lines appear 5 times a second, because the box starts **paused**. The LED flickers with each one.
 - `START` → the count climbs: `EVT count=1 … counted=1`, `count=2`, …
 - `PAUSE` → the count stops, but `EVT … counted=0` lines keep coming
@@ -69,9 +69,9 @@ The app finds the Pico on its own. Check that:
 
 The test pulses keep running until you send `TEST 0` or unplug the Pico. Remove the jumper when you're done.
 
-**Bench mode:** if the GP15–GP2 wire is already connected when the Pico powers up, the firmware detects it and starts
+**Bench mode:** if the GP11–GP2 wire is already connected when the Pico powers up, the firmware detects it and starts
 5 Hz test pulses by itself (it prints `OK TEST 5`). That way the app alone is enough to test, with no terminal needed.
-In the finished box GP15 is never connected, so this can't happen there.
+In the finished box GP11 is never connected, so this can't happen there.
 
 ## Testing on a computer without Python
 Use **Thonny** (thonny.org; the Windows installer can install "for me only", which needs no admin rights). It can install

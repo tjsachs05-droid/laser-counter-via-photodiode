@@ -14,7 +14,7 @@ PIN_Q = 2  # latch output 1Q: goes high when a pulse is detected, stays high unt
 PIN_CLR = 3  # latch clear 1CLR, active low
 PIN_SDA = 4  # I2C0 to the DAC board
 PIN_SCL = 5
-PIN_TEST = 15  # bench-test pulse output (TEST command); leave unconnected in the box
+PIN_TEST = 11  # bench-test pulse output (TEST command); leave unconnected in the box
 PIN_SMPS_MODE = 23  # Pico regulator mode: high = PWM, less ripple on 3.3 V
 PIN_ADC_BIAS = 26  # readback of DAC channel A
 PIN_ADC_THR = 27  # readback of DAC channel B
@@ -32,7 +32,7 @@ TEST_MAX_HZ = 1000
 STATUS_PERIOD_MS = 1000
 LED_ON_MS = 50
 TEST_PULSE_US = 20
-BENCH_TEST_HZ = 5  # test pulse rate when the GP15-GP2 bench jumper is fitted at power-up
+BENCH_TEST_HZ = 5  # test pulse rate when the GP11-GP2 bench jumper is fitted at power-up
 
 micropython.alloc_emergency_exception_buf(100)
 
@@ -97,9 +97,9 @@ class Dac:
 
 
 def bench_jumper_present(test, q):
-    """True if GP15 is wired straight to GP2 (bench-test jumper). Call before the edge interrupt is on.
+    """True if GP11 is wired straight to GP2 (bench-test jumper). Call before the edge interrupt is on.
 
-    In the finished box GP15 is unconnected and Q is held low by the cleared latch, so this is always False there.
+    In the finished box GP11 is unconnected and Q is held low by the cleared latch, so this is always False there.
     """
     for level in (1, 0, 1, 0):
         test.value(level)
