@@ -205,7 +205,8 @@ With the camera connected as normal, scope the photodiode line at the camera end
 - [ ] Pause, resume, and reset mid-run behave correctly
 
 ### Phase 5: Package
-- [ ] PyInstaller `.exe` and a one-page user guide
+- [x] PyInstaller `.exe`: `app/build_exe.py` → `dist/LaserShotCounter.exe` (see [app/README.md](app/README.md))
+- [ ] One-page user guide
 - [ ] Optional extras from §3
 
 ---

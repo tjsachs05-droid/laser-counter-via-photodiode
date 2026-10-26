@@ -38,6 +38,28 @@ the device in the bottom-right corner, or pass `--port COM5`.
 
 Settings (threshold, holdoff, last device, theme) are remembered between runs.
 
+## Make the .exe (for PCs without Python)
+
+```bash
+.venv/Scripts/python -m pip install -e "app[dev]"
+```
+
+```bash
+.venv/Scripts/python app/build_exe.py
+```
+
+This produces **`dist/LaserShotCounter.exe`** (~37 MB): one file with Python, Qt and the app inside. Copy it to any
+64-bit Windows 10/11 PC (USB stick, network share) and double-click it. Nothing needs installing.
+
+- The first launch takes a few seconds while it unpacks itself.
+- Windows may show *"Windows protected your PC"* because the file isn't code-signed. Click **More info → Run anyway**.
+  On a managed lab PC, IT may need to allow it.
+- Settings (threshold, holdoff, last device, theme) are saved per Windows user on each PC.
+- `LaserShotCounter.exe --simulate` runs it with the pretend laser (make a desktop shortcut with that argument).
+- Windows only. A Mac or Linux version would need to be built on that system.
+
+Rebuild after any change to the app. The `dist/` and `build/` folders aren't committed to git.
+
 ## Tests
 
 ```bash
