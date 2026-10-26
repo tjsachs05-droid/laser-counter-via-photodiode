@@ -115,4 +115,8 @@ For *why* each part is there, see the explanation in [PLAN.md §2](../PLAN.md).
 - Doesn't use the MCP4728's EEPROM (its built-in memory). The power-up sequence above already keeps the latch cleared until the DAC is set.
 - The ADC readback of VA and VB is a **sanity check**, accurate to roughly ±10–20 mV, not a calibration. For a precise threshold,
   measure VA − VB once with the Keithley 2000 and store a correction.
-- **GP11** outputs test pulses for bench testing (`TEST` command). Leave it unconnected in the finished box.
+- **GP11** outputs test pulses for bench testing: `TEST` (positive, for the GP11–GP2 jumper) and `PULSE` (negative,
+  through a temporary 1 kΩ / 200 Ω divider into the input, see [build-guide.md](build-guide.md) Stage 5). Leave GP11
+  unconnected in the finished box.
+
+The board layout and assembly steps are in [build-guide.md](build-guide.md).

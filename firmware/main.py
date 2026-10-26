@@ -8,7 +8,12 @@ import machine
 import micropython
 from machine import Pin, I2C, ADC, Timer
 
-FW_VERSION = "0.1.0"
+try:
+    import rp2
+except ImportError:  # the PC test suite runs this file without the Pico's PIO module
+    rp2 = None
+
+FW_VERSION = "0.2.0"
 
 PIN_Q = 2  # latch output 1Q: goes high when a pulse is detected, stays high until cleared
 PIN_CLR = 3  # latch clear 1CLR, active low
@@ -33,6 +38,10 @@ STATUS_PERIOD_MS = 1000
 LED_ON_MS = 50
 TEST_PULSE_US = 20
 BENCH_TEST_HZ = 5  # test pulse rate when the GP11-GP2 bench jumper is fitted at power-up
+PULSE_MIN_NS = 16  # two PIO cycles at 125 MHz
+PULSE_MAX_NS = 1000000
+PULSE_DEFAULT_NS = 50
+PULSE_MAX_COUNT = 1000000
 
 micropython.alloc_emergency_exception_buf(100)
 
@@ -55,6 +64,35 @@ def _test_pulse(timer):
     _test_out.value(1)
     time.sleep_us(TEST_PULSE_US)
     _test_out.value(0)
+
+
+if rp2 is not None:
+
+    @rp2.asm_pio(set_init=rp2.PIO.OUT_HIGH)
+    def _neg_pulse():
+        # Wait for a width word x, hold the pin low for x + 2 cycles, then high again.
+        pull(block)
+        mov(x, osr)
+        set(pins, 0)
+        label("low")
+        jmp(x_dec, "low")
+        set(pins, 1)
+
+
+# PULSE generator state, read by its timer interrupt.
+_pulse_sm = None
+_pulse_x = 0
+_pulses_left = 0  # pulses still to send; -1 means no limit
+
+
+def _pulse_tick(timer):
+    global _pulses_left
+    if _pulses_left == 0:
+        timer.deinit()
+        return
+    _pulse_sm.put(_pulse_x)
+    if _pulses_left > 0:
+        _pulses_left -= 1
 
 
 class Clock:
@@ -204,16 +242,62 @@ class Box:
                 return ["ERR test rate must be 0..{} Hz".format(TEST_MAX_HZ)]
             self.set_test(value)
             return ["OK TEST {}".format(value)]
+        elif cmd == "PULSE":
+            return self._handle_pulse(arg.split())
         else:
             return ["ERR unknown command: " + line]
         return ["OK " + cmd, self.status()]
 
-    def set_test(self, hz):
+    def _handle_pulse(self, args):
+        usage = "ERR usage: PULSE <0..{} Hz> [{}..{} ns] [count 0..{}]".format(
+            TEST_MAX_HZ, PULSE_MIN_NS, PULSE_MAX_NS, PULSE_MAX_COUNT
+        )
+        if not 1 <= len(args) <= 3:
+            return [usage]
+        hz = _parse_int(args[0], 0, TEST_MAX_HZ)
+        width = _parse_int(args[1], PULSE_MIN_NS, PULSE_MAX_NS) if len(args) > 1 else PULSE_DEFAULT_NS
+        count = _parse_int(args[2], 0, PULSE_MAX_COUNT) if len(args) > 2 else 0
+        if hz is None or width is None or count is None:
+            return [usage]
+        if hz and width * hz >= 500000000:
+            return ["ERR pulse must be shorter than half the period"]
+        if rp2 is None:
+            return ["ERR PULSE needs the Pico's PIO"]
+        actual = self.set_pulse(hz, width, count)
+        return ["OK PULSE {} {} {}".format(hz, actual, count)]
+
+    def _stop_test_output(self, idle_high):
+        global _pulse_sm
         if self._test_timer is not None:
             self._test_timer.deinit()
             self._test_timer = None
+        if _pulse_sm is not None:
+            _pulse_sm.active(0)
+            _pulse_sm = None
+        Pin(PIN_TEST, Pin.OUT, value=1 if idle_high else 0)  # also takes the pin back from the PIO
+
+    def set_test(self, hz):
+        """Positive 20 us pulses on GP11 (idle low), for the GP11-GP2 bench jumper."""
+        self._stop_test_output(idle_high=False)
         if hz > 0:
             self._test_timer = Timer(mode=Timer.PERIODIC, period=max(1, round(1000 / hz)), callback=_test_pulse)
+
+    def set_pulse(self, hz, width_ns, count):
+        """Negative pulses on GP11 (idle high), for driving the input stage through a divider.
+
+        GP11 stays high when the pulses stop, so stopping can't fake a shot. Returns the actual width in ns.
+        """
+        global _pulse_sm, _pulse_x, _pulses_left
+        self._stop_test_output(idle_high=True)
+        if hz == 0:
+            return 0
+        cycles = max(2, round(width_ns * machine.freq() / 1e9))
+        _pulse_x = cycles - 2
+        _pulses_left = count if count > 0 else -1
+        _pulse_sm = rp2.StateMachine(0, _neg_pulse, freq=machine.freq(), set_base=Pin(PIN_TEST))
+        _pulse_sm.active(1)
+        self._test_timer = Timer(mode=Timer.PERIODIC, period=max(1, round(1000 / hz)), callback=_pulse_tick)
+        return round(cycles * 1e9 / machine.freq())
 
     def service(self):
         """Run often from the main loop. Returns the lines to send."""

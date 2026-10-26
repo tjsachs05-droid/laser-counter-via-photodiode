@@ -191,9 +191,10 @@ With the camera connected as normal, scope the photodiode line at the camera end
 - [x] 13 tests against a simulated Pico, including the 18-minute tick wraparound and app-protocol compatibility
 - [ ] On the real Pico: flash, terminal check, jumper GP11 → GP2, then the app at 5 shots/s
 
-### Phase 3: Front end (bench)
-- [ ] Solder the TLV3501 and 74LVC74A onto their DIP adapters, then build on the perma-proto board with short leads and a solid ground
-- [ ] Test with a pulse/function generator: negative 20 ns pulses at −0.2, −0.4, −0.6 V. The count should switch on and off cleanly as the threshold crosses the pulse height.
+### Phase 3: Front end (bench). Step-by-step: [docs/build-guide.md](docs/build-guide.md)
+- [ ] Solder the TLV3501 and 74LVC74A onto their DIP adapters, then build boards A and B on the Perma-Protos
+- [ ] Test without a function generator: the Pico's `PULSE` command drives the input through a temporary divider
+      (~−0.55 V, 15 ns–1 ms pulses). 1000 pulses in → count 1000; the count switches on and off cleanly as the threshold crosses the pulse height.
 - [ ] Mount in the enclosure: BNC jack in one end cap, USB in the other
 
 ### Phase 4: Lab validation

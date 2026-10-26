@@ -16,5 +16,6 @@ software display theme should be professionally minimal / clean but readable abo
 - [PLAN.md](PLAN.md): design, signal chain, phases, risks
 - [BOM.md](BOM.md): parts and where to buy them
 - [docs/hardware.md](docs/hardware.md): every connection in the counter box, pin by pin
+- [docs/build-guide.md](docs/build-guide.md): step-by-step assembly and testing, with board diagrams
 - [app/](app/README.md): desktop app. Try it now with the built-in simulator, no hardware needed.
 - [docs/protocol.md](docs/protocol.md): the serial protocol between the app and the counter box

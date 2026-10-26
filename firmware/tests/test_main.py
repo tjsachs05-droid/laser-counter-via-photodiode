@@ -96,14 +96,40 @@ class FakeTimer:
         self.active = False
 
 
+class FakeStateMachine:
+    created = []
+
+    def __init__(self, sm_id, program, freq=None, set_base=None):
+        self.program = program
+        self.freq = freq
+        self.puts = []
+        self.running = False
+        FakeStateMachine.created.append(self)
+
+    def active(self, on):
+        self.running = bool(on)
+
+    def put(self, word):
+        self.puts.append(word)
+
+
+def fake_rp2():
+    rp2 = types.ModuleType("rp2")
+    rp2.PIO = types.SimpleNamespace(OUT_HIGH=1)
+    rp2.asm_pio = lambda **kwargs: (lambda program: program)  # the PIO program body never runs on a PC
+    rp2.StateMachine = FakeStateMachine
+    return rp2
+
+
 def load_firmware(fake_time):
     machine = types.ModuleType("machine")
     machine.Pin, machine.I2C, machine.ADC, machine.Timer = FakePin, FakeI2C, FakeADC, FakeTimer
     machine.disable_irq = lambda: 0
     machine.enable_irq = lambda state: None
+    machine.freq = lambda: 125_000_000
     micropython = types.ModuleType("micropython")
     micropython.alloc_emergency_exception_buf = lambda size: None
-    fakes = {"time": fake_time.module(), "machine": machine, "micropython": micropython}
+    fakes = {"time": fake_time.module(), "machine": machine, "micropython": micropython, "rp2": fake_rp2()}
     saved = {name: sys.modules.get(name) for name in fakes}
     sys.modules.update(fakes)
     try:
@@ -259,9 +285,48 @@ def test_without_dac_threshold_is_kept_and_reported():
     assert "dac=0" in reply[1]
 
 
+def test_pulse_defaults_and_actual_width():
+    rig = Rig()
+    assert rig.send("PULSE 5") == ["OK PULSE 5 48 0"]  # 50 ns asked; nearest whole PIO cycles is 6 x 8 ns
+    sm = FakeStateMachine.created[-1]
+    assert sm.running and sm.freq == 125_000_000
+    assert FakeTimer.created[-1].period == 200
+
+
+def test_pulse_sends_exactly_count_pulses_then_stops():
+    rig = Rig()
+    assert rig.send("PULSE 100 16 3") == ["OK PULSE 100 16 3"]
+    sm, timer = FakeStateMachine.created[-1], FakeTimer.created[-1]
+    for _ in range(6):
+        if timer.active:
+            timer.callback(timer)
+    assert sm.puts == [0, 0, 0]  # 16 ns = 2 cycles = width word 0
+    assert not timer.active
+
+
+def test_pulse_zero_and_test_both_stop_the_pio():
+    rig = Rig()
+    rig.send("PULSE 5 1000")
+    sm = FakeStateMachine.created[-1]
+    assert sm.puts == [] and FakeTimer.created[-1].period == 200
+    assert rig.send("PULSE 0") == ["OK PULSE 0 0 0"]
+    assert not sm.running
+    rig.send("PULSE 5 1000")
+    sm = FakeStateMachine.created[-1]
+    rig.send("TEST 5")
+    assert not sm.running
+
+
+@pytest.mark.parametrize(
+    "bad", ["PULSE", "PULSE 2000", "PULSE 5 10", "PULSE 5 2000000", "PULSE 5 50 -1", "PULSE 500 1000000", "PULSE a b c", "PULSE 1 2 3 4"]
+)
+def test_pulse_rejects_bad_arguments(bad):
+    assert Rig().send(bad)[0].startswith("ERR"), bad
+
+
 def test_commands_match_the_protocol():
     rig = Rig()
-    assert p.parse_line(rig.send("ID?")[0]) == p.Ident("laser-counter", "0.1.0")
+    assert p.parse_line(rig.send("ID?")[0]) == p.Ident("laser-counter", "0.2.0")
     assert isinstance(p.parse_line(rig.send("STATUS?")[0]), p.Status)
     for bad in ("THR 50", "THR -2000", "THR abc", "HOLD 5", "HOLD 2000000", "TEST -1", "FIRE"):
         assert rig.send(bad)[0].startswith("ERR"), bad

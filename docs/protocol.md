@@ -16,6 +16,7 @@ terminal (PuTTY, Thonny, `python -m serial.tools.miniterm COM5`).
 | `THR <mV>` | Trigger threshold, integer mV relative to the 0 V baseline, from **-1400 to -5** | `OK THR <mV>`, then `STAT …` |
 | `HOLD <µs>` | Holdoff (dead time) after each detected pulse, integer µs, from **10 to 1000000** | `OK HOLD <µs>`, then `STAT …` |
 | `TEST <Hz>` | *Bench testing only.* Output a 20 µs test pulse on GP11 at this rate, 0–1000 (0 = off). The app never sends it. | `OK TEST <Hz>` |
+| `PULSE <Hz> [ns] [count]` | *Bench testing only.* **Negative** pulses on GP11 (idle high, pulse low) for driving the input stage through a divider. Width 16–1000000 ns (default 50), rounded to whole PIO cycles. `count` 0 = keep going. 0 Hz = off (GP11 stays high). | `OK PULSE <Hz> <actual ns> <count>` |
 
 Anything else gets `ERR <message>`. If the DAC board isn't found, `THR` still stores the value but replies
 `ERR DAC not found; …`, then `STAT …`.

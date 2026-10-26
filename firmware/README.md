@@ -36,7 +36,7 @@ Open a simple serial terminal (replace COM5):
 .venv/Scripts/python -m serial.tools.miniterm --echo --eol LF COM5 115200
 ```
 You'll see a `STAT …` line every second. Type these, pressing Enter after each:
-- `ID?` → `ID laser-counter fw=0.1.0`
+- `ID?` → `ID laser-counter fw=0.2.0`
 - `STATUS?` → `STAT running=0 count=0 thr=-400 hold=1000 t=… dac=0`. `dac=0` is expected, since the DAC board isn't connected yet.
 - `TEST 5` → `OK TEST 5`. The Pico now outputs a short test pulse 5 times a second on **GP11**.
 
@@ -62,7 +62,7 @@ Quit the terminal with **Ctrl+]**. Only one program can use the port at a time.
 .venv/Scripts/python -m laser_counter
 ```
 The app finds the Pico on its own. Check that:
-- the top right shows the port and **firmware 0.1.0**
+- the top right shows the port and **firmware 0.2.0**
 - **shots/s reads 5.0**, and the trigger dot flashes
 - **Start**, **Pause** and **Reset…** behave like the terminal commands
 - the bottom shows *"Counter box: DAC not found…"* when it connects or the threshold changes. That's normal until the DAC board is wired up in Phase 3.
