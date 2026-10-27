@@ -46,6 +46,24 @@ Every connection here comes from [hardware.md](hardware.md). If the guide and th
   stripped wire insulation over it as a sleeve.
 - Top of each drawing = the end facing the box's end cap: **USB end for board A, BNC end for board B**.
 
+### Building on a solderless breadboard first (while the Perma-Protos are on backorder)
+A full-size solderless breadboard (columns A–J, rails W X on the left and Y Z on the right, about 63 rows) has the same layout
+as the Perma-Proto. Stages 2–5 can be built and tested on it with no board soldering, then moved onto the Perma-Protos for the box.
+
+| Drawing | Full-size breadboard |
+|---|---|
+| Board B rows 1–30 | rows 1–30, as drawn |
+| Board A rows 1–30 | rows 33–62 (**add 32** to every board A row) |
+| − rails | W (left) and Z (right) |
+| + rails | X (left) and Y (right) |
+
+- **Rails:** beep the top and bottom hole of each rail. If a rail is split in the middle, bridge the gap with a short wire.
+- **The Pico H** plugs straight into columns C and H, rows 33–52, with the USB end at row 33. No female headers are needed.
+- **Skip W1 and W2** (3.3 V and ground between the boards); both boards share the rails. W3–W6 become short wires (board A row + 32).
+- **The adapters and DAC board need their header pins soldered on.** Use the breadboard as the jig: pins in the breadboard, part on top, and quick joints from above.
+- **Keep wires short and C3 right at the comparator.** If the comparator chatters in Stage 5, suspect the breadboard; the soldered Perma-Proto build will be cleaner.
+- **Fit:** a full-size breadboard (about 6.5") fits the 8¾" box (3686K72) but not the 6¼" one (3686K67).
+
 ### Soldering basics (30-second version)
 1. Iron at about 330–350 °C. Wipe the tip, then melt a little solder on it ("tinning").
 2. Touch the tip to **both** the pad and the lead for about a second, then feed solder into the joint, not onto the iron. Pull the solder away, then the iron.
