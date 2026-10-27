@@ -47,22 +47,31 @@ Every connection here comes from [hardware.md](hardware.md). If the guide and th
 - Top of each drawing = the end facing the box's end cap: **USB end for board A, BNC end for board B**.
 
 ### Building on a solderless breadboard first (while the Perma-Protos are on backorder)
-A full-size solderless breadboard (columns A–J, rails W X on the left and Y Z on the right, about 63 rows) has the same layout
-as the Perma-Proto. Stages 2–5 can be built and tested on it with no board soldering, then moved onto the Perma-Protos for the box.
+A full-size solderless breadboard (63 rows, columns A–J, rails W X on the left and Y Z on the right) can hold both boards.
+Stages 2–5 are built and tested on it with no board soldering, then moved onto the Perma-Protos for the box.
 
-| Drawing | Full-size breadboard |
-|---|---|
-| Board B rows 1–30 | rows 1–30, as drawn |
-| Board A rows 1–30 | rows 33–62 (**add 32** to every board A row) |
-| − rails | W (left) and Z (right) |
-| + rails | X (left) and Y (right) |
+![Both boards on one breadboard](img/breadboard.png)
 
-- **Rails:** beep the top and bottom hole of each rail. If a rail is split in the middle, bridge the gap with a short wire.
-- **The Pico H** plugs straight into columns C and H, rows 33–52, with the USB end at row 33. No female headers are needed.
-- **Skip W1 and W2** (3.3 V and ground between the boards); both boards share the rails. W3–W6 become short wires (board A row + 32).
-- **The adapters and DAC board need their header pins soldered on.** Use the breadboard as the jig: pins in the breadboard, part on top, and quick joints from above.
-- **Keep wires short and C3 right at the comparator.** If the comparator chatters in Stage 5, suspect the breadboard; the soldered Perma-Proto build will be cleaner.
-- **Fit:** a full-size breadboard (about 6.5") fits the 8¾" box (3686K72) but not the 6¼" one (3686K67).
+**Follow this drawing, not the Perma-Proto ones, when building on the breadboard.** The breadboard numbers its rows
+**bottom to top** while the Perma-Proto drawings count top to bottom. Copying row numbers straight across would mirror the
+layout, and a mirrored chip can't be placed: its pins would end up in the wrong rows. The drawing above lays both
+Perma-Proto layouts onto the breadboard exactly as drawn.
+
+- **Hold the breadboard like this:** row 1 nearest you, rails W and X on the **left**. Same as the photo of yours.
+- **Top half, rows 34–63: board B** (input + chips, BNC end at row 63). **Bottom half, rows 1–30: board A** (Pico + DAC).
+  Converting a Perma-Proto row: board B → **64 − row**, board A → **31 − row**. Columns stay the same letters.
+- **Rails:** W and Z are ground (−), X and Y are 3.3 V (+). Mark them with tape. The two short **rail bridges** (Y30–Y34, Z30–Z34)
+  join the halves in case your breadboard splits its rails in the middle. Fit them either way.
+- **Pico H:** plugs straight in, columns **C and H, rows 11–30**, **USB end toward the middle** (row 31). No female headers needed.
+- **Chips:** pin-1 dot at the **top-left**. **U1** pins 1–4 in C53→C50, pins 8–5 in G53→G50. **U2** pins 1–7 in C45→C39, pins 14–8 in G45→G39.
+- **DAC board:** rows 1–10, left half, with **its pins in one column, one pin per row, never along a single row** (that would
+  short all its pins together). Keep its circuit board clear of the Pico's; if they touch, turn the DAC so its body points away.
+- **Skip W1 and W2** (3.3 V and ground between the boards); the rails carry them. The other board-to-board wires are drawn in.
+- **The adapters and DAC board need their header pins soldered on** (Stage 3a). Use the breadboard as the jig: pins in the breadboard,
+  part on top, quick joints from above. **Nothing else is soldered**; every wire and part just pushes in.
+- **Keep wires short and C3 right at the comparator.** If the comparator chatters in Stage 5, suspect the breadboard; the soldered
+  Perma-Proto build will be cleaner.
+- **Fit:** the breadboard (~6.5") fits the 8¾" box (3686K72).
 
 ### Soldering basics (30-second version)
 1. Iron at about 330–350 °C. Wipe the tip, then melt a little solder on it ("tinning").
