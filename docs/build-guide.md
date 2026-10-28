@@ -354,7 +354,7 @@ Plug in the USB and open the terminal. Type the commands and press Enter after e
    clock steps, 6.7–8 ns depending on its clock speed).
    `EVT … counted=0` lines appear 5 times a second (the box starts paused). The LED flickers.
 2. **Counting:** `START` → `count` climbs 1, 2, 3… → `PAUSE` → stops.
-3. **Exact count, 50 ns pulses:** `RESET`, `START`, then `PULSE 100 50 1000`. After about 10 s the pulses stop on their own.
+3. **Exact count, 50 ns pulses:** `PULSE 0` first (otherwise the 5 Hz pulses from step 1 add extra counts), then `RESET`, `START`, `PULSE 100 50 1000`. After about 10 s the pulses stop on their own.
    `STATUS?` → **`count=1000` exactly.**
 4. **Exact count, shortest pulses (about 15 ns):** `RESET`, then `PULSE 100 16 1000` → after 10 s, **`count=1000`.**
    This shows the comparator and latch catch pulses shorter than your laser's.
