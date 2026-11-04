@@ -57,7 +57,11 @@ Readers must ignore fields they don't recognize, so fields can be added later wi
 - Any other line (MicroPython boot banner, tracebacks) is ignored by the app
 
 ## Behavior the app relies on
-- The box owns the count. The app never counts on its own; it displays what the box reports.
-- The box powers up **paused** with count 0.
+- The box owns the running total. The app sends `START` when it connects and never `PAUSE` or `RESET`, so the
+  total keeps rising, even while the app is closed. The app's laps each add the rise in `count` while they run,
+  so a missed `EVT` line can't lose a shot.
+- The box powers up **paused** with count 0. A `STAT` with `running=0` while connected makes the app send `START`
+  again. On reconnecting, a total and `t` that are both at least where the app last saw them mean the box never
+  restarted, and the shots in between are added to the laps that were running.
 - Pulses are detected (and `EVT` is sent) whether running or paused.
 - Within one holdoff after a detected pulse, further edges are ignored: no `EVT`, no count.

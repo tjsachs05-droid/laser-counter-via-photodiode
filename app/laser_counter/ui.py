@@ -1,22 +1,29 @@
-"""Main window: live count, shots per second, start/pause, reset, and the trigger threshold."""
+"""Main window: laps of shot counts, shots per second, and the trigger threshold.
+
+Each lap is its own count with Start/Pause, Reset and Delete (see laps.py). The box counts all the time;
+the laps decide which shots they keep.
+"""
 
 from __future__ import annotations
 
+import json
 import queue
 import time
 
 from PySide6 import QtSvg  # noqa: F401  Qt's SVG image plugin (arrow icons) only loads once this is imported
 from PySide6.QtCore import QSettings, Qt, QTimer, Signal
-from PySide6.QtGui import QFont, QGuiApplication, QKeySequence, QShortcut
+from PySide6.QtGui import QFont, QFontMetrics, QGuiApplication
 from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QFrame,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QSpinBox,
     QToolButton,
     QVBoxLayout,
@@ -25,19 +32,21 @@ from PySide6.QtWidgets import (
 
 from . import protocol as p
 from .device import Device, Disconnected, SerialTransport, SimTransport, Unparsed, list_serial_ports
+from .laps import MAX_LAPS, MAX_NAME_LENGTH, Lap, Laps, ShotTally
 from .rate import RateMeter
 from .simulator import SimulatedFirmware
 from .theme import stylesheet
 
 SIMULATOR = "Simulator"
 POLL_MS = 30
+SAVE_MS = 1000
 TRIGGER_FLASH_MS = 120
 PAUSED_PULSE_WARNING_S = 3.0
 DEFAULT_THRESHOLD_MV = -400
 DEFAULT_HOLDOFF_MS = 1.0
 DISPLAY_FONTS = ["Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", "Arial"]
 
-STATE_TEXT = {"running": "●  RUNNING", "paused": "●  PAUSED", "disconnected": "○  NOT CONNECTED"}
+LAP_STATE_TEXT = {"running": "●  RUNNING", "paused": "●  PAUSED"}
 
 
 def display_font(weight: QFont.Weight = QFont.Weight.Normal) -> QFont:
@@ -70,14 +79,168 @@ class PortCombo(QComboBox):
         super().showPopup()
 
 
+class NameEdit(QLineEdit):
+    """A lap's name. Looks like a label until clicked; Enter keeps the edit, Escape undoes it."""
+
+    cancelled = Signal()
+
+    def keyPressEvent(self, event) -> None:
+        if event.key() == Qt.Key_Escape:
+            self.cancelled.emit()
+            return
+        super().keyPressEvent(event)
+
+
+class LapRow(QFrame):
+    """One lap: its name, state and count, with its own Start/Pause, Reset and Delete buttons."""
+
+    toggle_clicked = Signal(object)
+    reset_clicked = Signal(object)
+    delete_clicked = Signal(object)
+    renamed = Signal(object, str)
+
+    def __init__(self, lap: Lap):
+        super().__init__(objectName="lapRow")
+        self.lap = lap
+        self._count_px_max = 40
+        self.name_edit = NameEdit(lap.name, objectName="lapName", maxLength=MAX_NAME_LENGTH, toolTip="Click to rename")
+        self.name_edit.editingFinished.connect(self._finish_rename)
+        self.name_edit.cancelled.connect(self._cancel_rename)
+        self.state_label = QLabel(objectName="lapState")
+        self.count_label = QLabel(objectName="lapCount", alignment=Qt.AlignRight | Qt.AlignVCenter)
+        self.count_label.setFont(display_font(QFont.Weight.Medium))
+        self.toggle_button = QPushButton(objectName="lapToggle", toolTip="Start or pause this lap")
+        self.reset_button = QPushButton("Reset…", objectName="lapButton", toolTip="Set this lap to 0")
+        self.delete_button = QToolButton(text="✕", objectName="lapDelete")
+        self.toggle_button.clicked.connect(lambda: self.toggle_clicked.emit(self.lap))
+        self.reset_button.clicked.connect(lambda: self.reset_clicked.emit(self.lap))
+        self.delete_button.clicked.connect(lambda: self.delete_clicked.emit(self.lap))
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(14, 4, 10, 4)
+        layout.setSpacing(10)
+        layout.addWidget(self.name_edit)
+        layout.addWidget(self.state_label, 0, Qt.AlignVCenter)
+        layout.addStretch()
+        layout.addWidget(self.count_label)
+        layout.addSpacing(16)
+        for button in (self.toggle_button, self.reset_button, self.delete_button):
+            button.setFocusPolicy(Qt.NoFocus)
+            layout.addWidget(button)
+
+    def refresh(self, connected: bool, can_delete: bool) -> None:
+        lap = self.lap
+        text = f"{lap.count:,}"
+        if self.count_label.text() != text:
+            self.count_label.setText(text)
+            self._fit_count()
+        state = "running" if lap.running else "paused"
+        if self.state_label.property("state") != state:
+            self.state_label.setText(LAP_STATE_TEXT[state])
+            self.toggle_button.setText("Pause" if lap.running else "Start")
+            self.toggle_button.setProperty("kind", "pause" if lap.running else "start")
+            for widget in (self.state_label, self.count_label):
+                widget.setProperty("state", state)
+            for widget in (self.state_label, self.count_label, self.toggle_button):
+                _repolish(widget)
+            self._fit_count()
+        if not self.name_edit.hasFocus():
+            if self.name_edit.text() != lap.name:
+                self.name_edit.setText(lap.name)
+            self.name_edit.setCursorPosition(0)  # show a long name from its start
+        self.toggle_button.setEnabled(connected)
+        self.reset_button.setEnabled(connected)
+        self.delete_button.setEnabled(can_delete)
+        self.delete_button.setToolTip("Delete this lap" if can_delete else "There must be at least one lap")
+
+    def set_height(self, height: int) -> None:
+        self.setFixedHeight(height)
+        name_font = self.name_edit.font()
+        name_font.setPixelSize(max(14, min(22, int(height * 0.2))))
+        name_font.setWeight(QFont.Weight.DemiBold)
+        self.name_edit.setFont(name_font)
+        self.name_edit.setFixedWidth(name_font.pixelSize() * 12)
+        self._count_px_max = max(20, min(96, int(height * 0.48)))
+        self._fit_count()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._fit_count()
+
+    def _fit_count(self) -> None:
+        """The count as large as the row's height allows, but never wider than the room left for it."""
+        layout = self.layout()
+        margins = layout.contentsMargins()
+        others = self.name_edit.width() + sum(
+            widget.sizeHint().width()
+            for widget in (self.state_label, self.toggle_button, self.reset_button, self.delete_button)
+        )
+        room = self.width() - margins.left() - margins.right() - others - 6 * layout.spacing() - 40
+        font = self.count_label.font()
+        font.setPixelSize(100)
+        width_at_100 = max(1, QFontMetrics(font).horizontalAdvance(self.count_label.text() or "0"))
+        font.setPixelSize(max(16, min(self._count_px_max, room * 100 // width_at_100)))
+        if font != self.count_label.font():
+            self.count_label.setFont(font)
+
+    def _finish_rename(self) -> None:
+        self.name_edit.clearFocus()  # first, so the cleaned-up name can be shown
+        self.renamed.emit(self.lap, self.name_edit.text())
+
+    def _cancel_rename(self) -> None:
+        self.name_edit.setText(self.lap.name)
+        self.name_edit.clearFocus()
+        self.name_edit.setCursorPosition(0)
+
+
+class LapList(QScrollArea):
+    """The laps, one row each, sharing the height equally. Scrolls once they no longer fit."""
+
+    ROW_MIN = 56
+    ROW_MAX = 220
+    GAP = 10
+
+    def __init__(self):
+        super().__init__(objectName="lapList", widgetResizable=True, frameShape=QFrame.NoFrame)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        inner = QWidget(objectName="lapListInner")
+        self._layout = QVBoxLayout(inner)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(self.GAP)
+        self._layout.addStretch()
+        self.setWidget(inner)
+        self.rows: list[LapRow] = []
+
+    def set_rows(self, rows: list[LapRow]) -> None:
+        for row in self.rows:
+            self._layout.removeWidget(row)
+            row.hide()  # deleteLater() leaves it drawn until the event loop gets to it
+            row.deleteLater()
+        self.rows = rows
+        for index, row in enumerate(rows):
+            self._layout.insertWidget(index, row)
+        self._fit()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._fit()
+
+    def _fit(self) -> None:
+        count = max(1, len(self.rows))
+        height = (self.viewport().height() - (count - 1) * self.GAP) // count
+        for row in self.rows:
+            row.set_height(max(self.ROW_MIN, min(self.ROW_MAX, height)))
+
+
 class MainWindow(QMainWindow):
     def __init__(self, settings: QSettings | None = None, sim_rate_hz: float = 5.0):
         super().__init__()
         self.settings = settings if settings is not None else QSettings()
         self.sim_rate_hz = sim_rate_hz
         self.device: Device | None = None
-        self.running = False
-        self.count = 0
+        self.simulated = False
+        self.laps, self.tally = self._load_laps()
+        self._laps_dirty = False
         self.rate_meter = RateMeter()
         self._last_paused_pulse_s: float | None = None
 
@@ -89,17 +252,21 @@ class MainWindow(QMainWindow):
         self._holdoff_timer.timeout.connect(self._send_holdoff)
 
         self.setWindowTitle("Laser Shot Counter")
-        self.setMinimumSize(600, 460)
-        self.resize(860, 620)
+        self.setMinimumSize(860, 500)
+        self.resize(900, 640)
         self._build()
         self._dark = self._initial_dark()
         self._apply_theme()
         self._refresh_ports()
+        self._rebuild_lap_rows()
         self._set_connected(False)
 
         self._poll_timer = QTimer(self, interval=POLL_MS)
         self._poll_timer.timeout.connect(self._poll)
         self._poll_timer.start()
+        self._save_timer = QTimer(self, interval=SAVE_MS)
+        self._save_timer.timeout.connect(self._save_if_dirty)
+        self._save_timer.start()
 
     # ---- layout ---------------------------------------------------------------------------------
 
@@ -112,20 +279,26 @@ class MainWindow(QMainWindow):
         layout.setSpacing(0)
 
         top = QHBoxLayout()
-        self.state_pill = QLabel(objectName="statePill")
         self.trigger_dot = QLabel("●", objectName="triggerDot", toolTip="Flashes on every detected pulse")
         dot_font = self.trigger_dot.font()
         dot_font.setPixelSize(18)
         self.trigger_dot.setFont(dot_font)
+        self.rate_label = QLabel(objectName="rate")
+        rate_font = display_font(QFont.Weight.Medium)
+        rate_font.setPixelSize(22)
+        self.rate_label.setFont(rate_font)
+        self.state_pill = QLabel("○  NOT CONNECTED", objectName="statePill")
+        self.state_pill.setProperty("state", "disconnected")
         self.conn_label = QLabel(objectName="muted")
         theme_button = QToolButton(text="◐", toolTip="Switch between light and dark")
         theme_button.clicked.connect(self._toggle_theme)
-        top.addWidget(self.state_pill)
-        top.addStretch()
         top.addWidget(self.trigger_dot)
         top.addSpacing(4)
         top.addWidget(QLabel("trigger", objectName="muted"))
-        top.addSpacing(20)
+        top.addSpacing(28)
+        top.addWidget(self.rate_label)
+        top.addStretch()
+        top.addWidget(self.state_pill)
         top.addWidget(self.conn_label)
         top.addSpacing(8)
         top.addWidget(theme_button)
@@ -133,47 +306,34 @@ class MainWindow(QMainWindow):
 
         layout.addSpacing(12)
         self.banner = QLabel(
-            "Shots are being detected while paused. Press Start to count them.",
+            "Shots are being detected, but every lap is paused.",
             objectName="banner",
             alignment=Qt.AlignCenter,
         )
         policy = self.banner.sizePolicy()
-        policy.setRetainSizeWhenHidden(True)  # keep the count from jumping when the banner appears
+        policy.setRetainSizeWhenHidden(True)  # keep the laps from jumping when the banner appears
         self.banner.setSizePolicy(policy)
         self.banner.hide()
         layout.addWidget(self.banner)
-        layout.addStretch(2)
+        layout.addSpacing(12)
 
-        self.count_label = QLabel("0", objectName="count", alignment=Qt.AlignCenter)
-        self.count_label.setFont(display_font(QFont.Weight.Medium))
-        self.caption_label = QLabel("shots", objectName="caption", alignment=Qt.AlignCenter)
-        self.caption_label.setFont(display_font())
-        self.rate_label = QLabel(objectName="rate", alignment=Qt.AlignCenter)
-        self.rate_label.setFont(display_font())
-        layout.addWidget(self.count_label)
-        layout.addWidget(self.caption_label)
-        layout.addSpacing(20)
-        layout.addWidget(self.rate_label)
-        layout.addStretch(2)
+        self.lap_list = LapList()
+        layout.addWidget(self.lap_list, 1)
+        layout.addSpacing(12)
 
-        buttons = QHBoxLayout()
-        buttons.setSpacing(14)
-        self.start_button = QPushButton("Start", objectName="primary", toolTip="Start / pause counting (Space)")
-        self.start_button.clicked.connect(self.toggle_running)
-        self.reset_button = QPushButton("Reset…", toolTip="Set the count to 0 (R)")
-        self.reset_button.clicked.connect(self._confirm_reset)
-        buttons.addStretch()
-        for button, width in ((self.start_button, 200), (self.reset_button, 160)):
-            font = button.font()
-            font.setPointSizeF(font.pointSizeF() * 1.25)
-            button.setFont(font)
-            button.setMinimumWidth(width)
-            button.setFocusPolicy(Qt.NoFocus)
-            buttons.addWidget(button)
-        buttons.addStretch()
-        layout.addLayout(buttons)
+        footer = QHBoxLayout()
+        self.new_lap_button = QPushButton(
+            "+  New lap", objectName="small", toolTip="Add a lap that counts from 0 while the others carry on"
+        )
+        self.new_lap_button.setFocusPolicy(Qt.NoFocus)
+        self.new_lap_button.clicked.connect(self.new_lap)
+        self.lap_total = QLabel(objectName="muted")
+        footer.addWidget(self.new_lap_button)
+        footer.addStretch()
+        footer.addWidget(self.lap_total)
+        layout.addLayout(footer)
 
-        layout.addSpacing(26)
+        layout.addSpacing(16)
         divider = QFrame(objectName="divider")
         divider.setFixedHeight(1)
         layout.addWidget(divider)
@@ -225,17 +385,6 @@ class MainWindow(QMainWindow):
         controls.addWidget(self.connect_button)
         layout.addLayout(controls)
 
-        QShortcut(QKeySequence(Qt.Key_Space), self, activated=self.toggle_running)
-        QShortcut(QKeySequence(Qt.Key_R), self, activated=self._confirm_reset)
-
-    def resizeEvent(self, event) -> None:
-        super().resizeEvent(event)
-        size = int(max(56, min(self.height() * 0.24, self.width() * 0.15)))
-        for label, factor in ((self.count_label, 1.0), (self.rate_label, 0.30), (self.caption_label, 0.16)):
-            font = label.font()
-            font.setPixelSize(max(14, int(size * factor)))
-            label.setFont(font)
-
     # ---- theme ----------------------------------------------------------------------------------
 
     def _initial_dark(self) -> bool:
@@ -284,6 +433,12 @@ class MainWindow(QMainWindow):
         except Exception as exc:  # serial errors vary by platform
             self.statusBar().showMessage(f"Could not open {name}: {exc}")
             return False
+        if name == SIMULATOR:
+            self._save_if_dirty()
+            self.laps, self.tally = Laps(), ShotTally()  # practice laps, never saved
+            self.simulated = True
+            self._rebuild_lap_rows()
+        self.tally.reconnected()
         self.device = Device(transport)
         self.device.open()
         self.settings.setValue("device", name)
@@ -291,7 +446,14 @@ class MainWindow(QMainWindow):
         if index >= 0:
             self.port_combo.setCurrentIndex(index)
         self._set_connected(True)
-        for line in (p.ID_QUERY, p.cmd_threshold(self.threshold_spin.value()), p.cmd_holdoff(self._holdoff_us()), p.STATUS_QUERY):
+        # The box counts all the time, even while the app is closed; pausing happens per lap.
+        for line in (
+            p.ID_QUERY,
+            p.cmd_threshold(self.threshold_spin.value()),
+            p.cmd_holdoff(self._holdoff_us()),
+            p.START,
+            p.STATUS_QUERY,
+        ):
             self.device.send(line)
         self.statusBar().showMessage(f"Connected to {transport.label}", 4000)
         return True
@@ -301,6 +463,13 @@ class MainWindow(QMainWindow):
             return
         device, self.device = self.device, None
         device.close()
+        if self.simulated:
+            self.simulated = False
+            self.laps, self.tally = self._load_laps()  # back to the real laps
+            self._laps_dirty = False
+            self._rebuild_lap_rows()
+        else:
+            self._save_laps()
         self._set_connected(False)
 
     def _toggle_connection(self) -> None:
@@ -310,43 +479,114 @@ class MainWindow(QMainWindow):
             self.connect_device(self.port_combo.currentData())
 
     def _set_connected(self, connected: bool) -> None:
-        self.start_button.setEnabled(connected)
-        self.reset_button.setEnabled(connected)
         self.port_combo.setEnabled(not connected)
         self.connect_button.setText("Disconnect" if connected else "Connect")
         self.rate_meter.clear()
         self._last_paused_pulse_s = None
-        if connected:
-            self.conn_label.setText(self.device.label)
-        else:
-            self.running = False
-            self.conn_label.setText("")
+        self.state_pill.setVisible(not connected)
+        self.conn_label.setText(self.device.label if connected else "")
+        if not connected:
             self.threshold_meas.setText("")
-            self._set_state("disconnected")
+        self._refresh_laps()
         self._refresh_live(time.monotonic())
 
-    # ---- commands -------------------------------------------------------------------------------
+    # ---- laps -----------------------------------------------------------------------------------
 
-    def toggle_running(self) -> None:
-        if self.device is not None:
-            self.device.send(p.PAUSE if self.running else p.START)
-
-    def reset_count(self) -> None:
-        if self.device is not None:
-            self.device.send(p.RESET)
-
-    def _confirm_reset(self) -> None:
+    def new_lap(self) -> Lap | None:
         if self.device is None:
-            return
-        answer = QMessageBox.question(
-            self,
-            "Reset count",
-            f"Reset the count to 0?\n\nCurrent count: {self.count:,}",
-            QMessageBox.Reset | QMessageBox.Cancel,
-            QMessageBox.Cancel,
-        )
-        if answer == QMessageBox.Reset:
-            self.reset_count()
+            return None
+        lap = self.laps.add()
+        if lap is not None:
+            self._laps_changed(rebuild=True)
+        return lap
+
+    def toggle_lap(self, lap: Lap) -> None:
+        if self.device is not None:
+            lap.running = not lap.running
+            self._laps_changed()
+
+    def reset_lap(self, lap: Lap) -> None:
+        if self.device is not None:
+            lap.count = 0
+            self._laps_changed()
+
+    def delete_lap(self, lap: Lap) -> bool:
+        if not self.laps.remove(lap):
+            return False
+        self._laps_changed(rebuild=True)
+        return True
+
+    def rename_lap(self, lap: Lap, name: str) -> None:
+        self.laps.rename(lap, name)
+        self._laps_changed()
+
+    def _confirm_reset_lap(self, lap: Lap) -> None:
+        if lap.count and self._confirm("Reset lap", f"Reset {lap.name} to 0?\n\nCurrent count: {lap.count:,}", "Reset"):
+            self.reset_lap(lap)
+
+    def _confirm_delete_lap(self, lap: Lap) -> None:
+        text = f"Delete {lap.name}?\n\nIts count of {lap.count:,} will be lost."
+        if not lap.count or self._confirm("Delete lap", text, "Delete"):
+            self.delete_lap(lap)
+
+    def _confirm(self, title: str, text: str, action: str) -> bool:
+        box = QMessageBox(QMessageBox.Question, title, text, QMessageBox.Cancel, self)
+        accept = box.addButton(action, QMessageBox.AcceptRole)
+        box.setDefaultButton(QMessageBox.Cancel)
+        box.exec()
+        return box.clickedButton() is accept
+
+    def _rebuild_lap_rows(self) -> None:
+        rows = []
+        for lap in self.laps:
+            row = LapRow(lap)
+            row.toggle_clicked.connect(self.toggle_lap)
+            row.reset_clicked.connect(self._confirm_reset_lap)
+            row.delete_clicked.connect(self._confirm_delete_lap)
+            row.renamed.connect(self.rename_lap)
+            rows.append(row)
+        self.lap_list.set_rows(rows)
+        self._refresh_laps()
+
+    def _refresh_laps(self) -> None:
+        connected = self.device is not None
+        for row in self.lap_list.rows:
+            row.refresh(connected, self.laps.can_remove)
+        self.new_lap_button.setEnabled(connected and self.laps.can_add)
+        self.lap_total.setText(f"{len(self.laps)} of {MAX_LAPS} laps")
+
+    def _laps_changed(self, rebuild: bool = False) -> None:
+        if rebuild:
+            self._rebuild_lap_rows()
+        else:
+            self._refresh_laps()
+        self._save_laps()
+        self._refresh_live(time.monotonic())
+
+    def _load_laps(self) -> tuple[Laps, ShotTally]:
+        try:
+            state = json.loads(self.settings.value("laps", "", type=str) or "{}")
+        except ValueError:
+            state = {}
+        if not isinstance(state, dict):
+            state = {}
+        try:
+            mark = (int(state["box"][0]), int(state["box"][1]))
+        except (KeyError, TypeError, ValueError, IndexError):
+            mark = None
+        return Laps.from_list(state.get("laps")), ShotTally(mark)
+
+    def _save_laps(self) -> None:
+        """Remember the laps, and where the box's total stood, for next time. Simulator laps aren't saved."""
+        self._laps_dirty = False
+        if not self.simulated:
+            self.settings.setValue("laps", json.dumps({"laps": self.laps.to_list(), "box": self.tally.mark}))
+
+    def _save_if_dirty(self) -> None:
+        if self._laps_dirty:
+            self._save_laps()
+
+    # ---- commands -------------------------------------------------------------------------------
 
     def _holdoff_us(self) -> int:
         return min(max(round(self.holdoff_spin.value() * 1000), p.HOLD_MIN_US), p.HOLD_MAX_US)
@@ -366,26 +606,30 @@ class MainWindow(QMainWindow):
 
     def _poll(self) -> None:
         now = time.monotonic()
+        shots_before = [lap.count for lap in self.laps]
         while self.device is not None:
             try:
                 message = self.device.messages.get_nowait()
             except queue.Empty:
                 break
             self._handle(message, now)
+        if [lap.count for lap in self.laps] != shots_before:
+            self._refresh_laps()
         self._refresh_live(now)
 
     def _handle(self, message, now: float) -> None:
         match message:
             case p.Event():
-                self._set_count(message.count)
+                self._take_reading(message.count, message.t_us, message.counted)
                 self.rate_meter.add(message.t_us, now)
-                if not message.counted:
+                if not self.laps.any_running:
                     self._last_paused_pulse_s = now
                 self._set_trigger_lit(True)
                 self._trigger_timer.start()
             case p.Status():
-                self._set_count(message.count)
-                self._set_running(message.running)
+                self._take_reading(message.count, message.t_us, message.running)
+                if not message.running:
+                    self.device.send(p.START)
                 if message.thr_meas_mv is not None:
                     self.threshold_meas.setText(_minus(f"measured ≈ {message.thr_meas_mv:.0f} mV"))
             case p.Ident():
@@ -398,23 +642,9 @@ class MainWindow(QMainWindow):
             case p.Ack() | Unparsed():
                 pass
 
-    def _set_count(self, count: int) -> None:
-        self.count = count
-        text = f"{count:,}"
-        if self.count_label.text() != text:
-            self.count_label.setText(text)
-
-    def _set_running(self, running: bool) -> None:
-        self.running = running
-        self._set_state("running" if running else "paused")
-
-    def _set_state(self, state: str) -> None:
-        self.state_pill.setText(STATE_TEXT[state])
-        self.state_pill.setProperty("state", state)
-        _repolish(self.state_pill)
-        self.start_button.setText("Pause" if state == "running" else "Start")
-        self.start_button.setProperty("kind", "pause" if state == "running" else "start")
-        _repolish(self.start_button)
+    def _take_reading(self, count: int, t_us: int, running: bool) -> None:
+        self.laps.add_shots(self.tally.update(count, t_us, running))
+        self._laps_dirty = True
 
     def _set_trigger_lit(self, lit: bool) -> None:
         self.trigger_dot.setProperty("lit", "true" if lit else "false")
@@ -425,7 +655,7 @@ class MainWindow(QMainWindow):
         self.rate_label.setText(f"{'—' if rate is None else f'{rate:.1f}'} shots/s")
         paused_pulses = (
             self.device is not None
-            and not self.running
+            and not self.laps.any_running
             and self._last_paused_pulse_s is not None
             and now - self._last_paused_pulse_s < PAUSED_PULSE_WARNING_S
         )
@@ -433,4 +663,5 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self.disconnect_device()
+        self._save_if_dirty()
         super().closeEvent(event)

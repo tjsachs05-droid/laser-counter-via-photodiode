@@ -207,6 +207,7 @@ With the camera connected as normal, scope the photodiode line at the camera end
 
 ### Phase 5: Package
 - [x] PyInstaller `.exe`: `app/build_exe.py` → `dist/LaserShotCounter.exe` (see [app/README.md](app/README.md))
+- [x] App 0.2.0: up to 9 named laps, each with its own Start/Pause, Reset and Delete; laps kept between runs
 - [ ] One-page user guide
 - [ ] Optional extras from §3
 

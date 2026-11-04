@@ -1,10 +1,11 @@
 # Laser Shot Counter app
 
-Desktop app for the counter box. It shows the live shot count and shots per second, has Start/Pause and
-Reset buttons, and sets the trigger threshold. Talks to the box over USB serial (see
-[docs/protocol.md](../docs/protocol.md)), or to a built-in simulator so you can try it with no hardware.
+Desktop app for the counter box. It shows shots per second and up to nine **laps**: separate shot counts that run
+side by side, each with its own name, Start/Pause, Reset and Delete. It also sets the trigger threshold. Talks to the
+box over USB serial (see [docs/protocol.md](../docs/protocol.md)), or to a built-in simulator so you can try it with
+no hardware.
 
-![Running, light theme](../docs/app-light.png)
+![Three laps, light theme](../docs/app-light.png)
 
 ## Run it
 
@@ -29,14 +30,28 @@ the device in the bottom-right corner, or pass `--port COM5`.
 
 | Control | What it does |
 |---|---|
-| **Start / Pause** (Space) | Start or pause adding shots to the count. While paused the box still detects shots, and a banner reminds you they aren't being counted. |
-| **Reset…** (R) | Set the count to 0, after a confirmation |
+| **+ New lap** | Add a lap that counts from 0, starting right away, while the other laps carry on. Up to 9 laps. |
+| Lap **name** | Click it to rename the lap (up to 24 characters). Enter keeps the new name, Escape undoes it. New laps are called Lap1, Lap2, … |
+| Lap **Start / Pause** | Start or pause just this lap. Paused laps show their count in grey. If every lap is paused while shots are arriving, a banner says so. |
+| Lap **Reset…** | Set just this lap to 0, after a confirmation |
+| Lap **✕** | Delete the lap (asks first if it has counted anything). The last lap can't be deleted. |
 | **Threshold** | A shot counts when the photodiode signal dips below this, e.g. −400 mV (the same as the PI-MAX4 trigger). The box's own measurement is shown next to it. |
 | **Holdoff** | Dead time after each shot, so ringing can't be counted twice. Default 1 ms. |
 | **trigger** dot | Flashes on every detected shot |
 | **◐** | Light / dark theme |
 
-Settings (threshold, holdoff, last device, theme) are remembered between runs.
+Lap controls work while the box is connected; names and Delete also work while it isn't.
+
+**Laps are kept when you close the app**: names, counts, and which are running. The box itself keeps counting while
+the app is closed, so the next time the app connects, shots fired in the meantime are added to the laps that were
+running. That only works if the box stayed plugged in: unplugging it resets its own total, and the laps then carry on
+from their saved counts. Test pulses sent from a terminal count too, so end a bench test with `PAUSE` and `RESET`
+(as the build guide does) and they won't be added.
+
+Laps made with the **Simulator** are just for practice. They start fresh, aren't saved, and your real laps come back
+when you disconnect it.
+
+Settings (threshold, holdoff, last device, theme) are remembered between runs too.
 
 ## Make the .exe (for PCs without Python)
 

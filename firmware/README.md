@@ -64,7 +64,7 @@ Quit the terminal with **Ctrl+]**. Only one program can use the port at a time.
 The app finds the Pico on its own. Check that:
 - the top right shows the port and **firmware 0.2.0**
 - **shots/s reads 5.0**, and the trigger dot flashes
-- **Start**, **Pause** and **Reset…** behave like the terminal commands
+- Lap1 counts 5 per second, and its **Pause**, **Start** and **Reset…** work (the app keeps the box itself running)
 - the bottom shows *"Counter box: DAC not found…"* when it connects or the threshold changes. That's normal until the DAC board is wired up in Phase 3.
 
 The test pulses keep running until you send `TEST 0` or unplug the Pico. Remove the jumper when you're done.

@@ -46,10 +46,23 @@ _TEMPLATE = """
 QMainWindow, QWidget#root, QStatusBar, QDialog, QMessageBox {{ background: {bg}; }}
 QLabel {{ color: {text}; }}
 QLabel#muted, QLabel#caption, QLabel#fieldLabel {{ color: {muted}; }}
-QLabel#statePill {{ padding: 4px 12px; border-radius: 12px; font-weight: 600; }}
-QLabel#statePill[state="running"] {{ color: {green}; background: {green_bg}; }}
-QLabel#statePill[state="paused"] {{ color: {amber}; background: {amber_bg}; }}
+QLabel#statePill, QLabel#lapState {{ padding: 4px 12px; border-radius: 12px; font-weight: 600; }}
+QLabel#lapState[state="running"] {{ color: {green}; background: {green_bg}; }}
+QLabel#lapState[state="paused"] {{ color: {amber}; background: {amber_bg}; }}
 QLabel#statePill[state="disconnected"] {{ color: {muted}; background: {chip}; }}
+QFrame#lapRow {{ background: {field}; border: 1px solid {border}; border-radius: 12px; }}
+QLabel#lapCount[state="paused"] {{ color: {muted}; }}
+QLineEdit#lapName {{
+    color: {text}; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 2px 6px;
+    selection-background-color: {chip}; selection-color: {text};
+}}
+QLineEdit#lapName:hover {{ border-color: {border}; }}
+QLineEdit#lapName:focus {{ background: {bg}; border-color: {muted}; }}
+QScrollArea#lapList, QWidget#lapListInner {{ background: transparent; border: none; }}
+QScrollBar:vertical {{ background: transparent; width: 8px; margin: 0; }}
+QScrollBar::handle:vertical {{ background: {faint}; border-radius: 4px; min-height: 24px; }}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: transparent; }}
 QLabel#triggerDot {{ color: {faint}; }}
 QLabel#triggerDot[lit="true"] {{ color: {led}; }}
 QLabel#banner {{ color: {amber}; background: {amber_bg}; border-radius: 8px; padding: 10px 14px; }}
@@ -61,10 +74,11 @@ QPushButton {{
 }}
 QPushButton:hover {{ border-color: {muted}; }}
 QPushButton:disabled {{ color: {faint}; border-color: {border}; }}
-QPushButton#primary {{ background: {primary}; color: {primary_text}; border: 1px solid {primary}; }}
-QPushButton#primary[kind="pause"] {{ background: {amber_bg}; color: {amber}; border: 1px solid {amber}; }}
-QPushButton#primary:disabled {{ background: {chip}; color: {faint}; border-color: {chip}; }}
 QPushButton#small {{ padding: 4px 14px; border-radius: 6px; }}
+QPushButton#lapToggle, QPushButton#lapButton {{ padding: 6px 14px; border-radius: 6px; }}
+QPushButton#lapToggle {{ background: {primary}; color: {primary_text}; border: 1px solid {primary}; min-width: 52px; }}
+QPushButton#lapToggle[kind="pause"] {{ background: {amber_bg}; color: {amber}; border: 1px solid {amber}; }}
+QPushButton#lapToggle:disabled {{ background: {chip}; color: {faint}; border-color: {chip}; }}
 QSpinBox, QDoubleSpinBox, QComboBox {{
     color: {text}; background: {field}; border: 1px solid {border};
     border-radius: 6px; padding: 3px 22px 3px 8px; min-height: 22px;
@@ -87,6 +101,7 @@ QComboBox QAbstractItemView {{
 }}
 QToolButton {{ color: {muted}; background: transparent; border: none; padding: 2px 6px; }}
 QToolButton:hover {{ color: {text}; }}
+QToolButton:disabled {{ color: {faint}; }}
 """
 
 
