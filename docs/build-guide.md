@@ -388,13 +388,18 @@ and you'll see a 3.3 V spike on each one.
 - Check the BNC end cap's thickness: the jack fits panels up to about **3.2 mm (1/8")**.
 
 ### 6b. BNC hole (9.7 mm "D" hole, see [BOM.md](../BOM.md))
-1. Mark the centre of the end cap, keeping it away from the screw holes. Drill a small pilot hole, then **3/8" (9.5 mm)**.
-2. Round-file until the jack's threads just pass through.
-3. File **one straight flat** so the jack drops in and can't turn (the flat is 8.85 mm from the far side of the hole).
-4. Deburr. Practicing on scrap aluminum first is worth it.
+The jack's threaded body has one flat side, and the hole copies it so the jack can't turn. That flat is metal you
+**leave in place**, so don't drill the full size: start smaller and file outward.
+1. Mark the centre of the end cap, keeping it away from the screw holes. Centre-punch, drill a small pilot hole, then
+   **8.5 mm (or 11/32")**. That's smaller than the flat's 8.85 mm.
+2. Pick the side that will be the flat. Round-file the rest of the hole outward toward **9.7 mm**, leaving that side alone.
+3. Use the jack as the gauge: keep filing until it slides in with its flat against yours. With calipers: 9.7 mm across
+   the round way, 8.85 mm from the flat to the far side.
+4. Deburr both faces. If the flat ends up too wide, a round hole still works; just tighten the nut firmly.
+   Practicing on scrap aluminum first is worth it.
 
 ### 6c. USB opening
-1. Hold the panel-mount USB connector against the other end cap and mark its two screw holes (**17.3 mm apart**) and the outline of the socket body.
+1. Hold the panel-mount USB connector against the inside of the other end cap and mark through its two screw holes, plus the outline of its socket opening.
 2. Drill two 3.2 mm holes for the M3 screws.
 3. Make the socket opening: drill a row of small holes inside the outline, then file it to shape until the socket fits.
 4. Plug the extension's **male** end into the Pico and screw the **female** end into the end cap. (The screws can also go in from behind if the panel is thick.)

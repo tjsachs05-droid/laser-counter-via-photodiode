@@ -93,8 +93,8 @@ also shows live stock for every line, including the ones marked *(unverified)* a
 From Amphenol's drawing (31-10-RFXG1), the recommended hole is a **"D" hole: 9.7 mm (0.382") round, with one
 flat 8.85 mm (0.348") across**. The flat stops the jack from turning. The jack's threaded section fits a panel up to about
 **1/8" (3.2 mm)** thick once the nut and lock washer are on.
-1. Drill **3/8" (9.5 mm)**. Open it out slightly with a round file until the jack's threads just pass through.
-2. File one straight flat so the jack drops in and can't spin.
+1. Drill **8.5 mm (11/32")**, smaller than the flat, because the flat is metal left in place.
+2. Round-file outward to 9.7 mm on every side but one, leaving that side as the straight flat. File until the jack drops in and can't spin.
 3. Measure the end-cap thickness first. Practicing the hole on scrap aluminum is worth it.
 
 The drawing also shows a **ground tab built into the back of the jack**, so the separate solder tag (31-10152-RFX)
