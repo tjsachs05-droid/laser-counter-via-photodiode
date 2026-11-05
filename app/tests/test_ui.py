@@ -70,6 +70,7 @@ def test_starts_disconnected(window):
     assert not row.delete_button.isEnabled()  # the only lap
     assert not window.new_lap_button.isEnabled()
     assert window.rate_label.text() == "— shots/s"
+    assert window.threshold_spin.value() == -1000
 
 
 def test_laps_count_side_by_side(window, box):

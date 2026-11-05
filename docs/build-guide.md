@@ -366,8 +366,9 @@ Plug in the USB and open the terminal. Type the commands and press Enter after e
    about **250 per second** (every other pulse lands in the 3 ms deaf period). `HOLD 1000` puts it back.
 7. Stop the pulses: `PULSE 0`.
 8. **The app:** leave the terminal (Ctrl + ]). Start `PULSE 5 50` again first if you want something to count, then open
-   `LaserShotCounter.exe`. Shots/s reads 5.0, Lap1 counts, its Pause/Start and Reset… work, and setting the threshold
-   to −650 stops the counting.
+   `LaserShotCounter.exe`. **Set its threshold to −400 first**: the test pulses are only about −0.53 V, so the app's
+   default of −1000 mV would ignore them. Then shots/s reads 5.0, Lap1 counts, its Pause/Start and Reset… work, and
+   setting the threshold to −650 stops the counting.
 
 Optional, with the scope: probe **L6 (BIAS)** and you'll see 1.5 V dipping to about 0.95 V on each pulse. Probe **R13 (U1 OUT)**
 and you'll see a 3.3 V spike on each one.

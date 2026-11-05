@@ -35,7 +35,7 @@ the device in the bottom-right corner, or pass `--port COM5`.
 | Lap **Start / Pause** | Start or pause just this lap. Paused laps show their count in grey. If every lap is paused while shots are arriving, a banner says so. |
 | Lap **Reset…** | Set just this lap to 0, after a confirmation |
 | Lap **✕** | Delete the lap (asks first if it has counted anything). The last lap can't be deleted. |
-| **Threshold** | A shot counts when the photodiode signal dips below this, e.g. −400 mV (the same as the PI-MAX4 trigger). The box's own measurement is shown next to it. |
+| **Threshold** | A shot counts when the photodiode signal dips below this. Default −1000 mV. The box's own measurement is shown next to it. |
 | **Holdoff** | Dead time after each shot, so ringing can't be counted twice. Default 1 ms. |
 | **trigger** dot | Flashes on every detected shot |
 | **◐** | Light / dark theme |

@@ -35,7 +35,7 @@ def test_start_pause_reset(clock):
 
 
 def test_threshold_below_the_pulses_detects_nothing(clock):
-    fw = make(clock)
+    fw = make(clock, pulse_mv=-600)
     assert fw.handle("THR -700")[0] == "OK THR -700"
     assert events(run(fw, clock, 1.0)) == []
 

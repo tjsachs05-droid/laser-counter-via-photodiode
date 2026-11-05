@@ -93,8 +93,8 @@ Re-check the PI-MAX4 gate delay after rewiring if your timing is referenced to t
 - Live **count**, large and readable from across the lab
 - Live **shots per second**, computed from the Pico's µs timestamps (not PC arrival times, which jitter)
 - **Start/Pause** toggle and **Reset** (with confirm) buttons, plus keyboard shortcuts (Space, R)
-- **Adjustable threshold** in mV (negative), default **−400 mV** so it matches the camera
-  (count = shots that would trigger the camera), saved between sessions
+- **Adjustable threshold** in mV (negative), saved between sessions. The app's default is **−1000 mV**, chosen in the
+  lab to clear the laser's electrical noise; the box itself still powers up at −400 mV until the app connects.
 - No missed or extra counts (validated, see Phase 4). Camera triggering unchanged.
 
 **Later (optional)**: target-count alert, per-shot CSV log, threshold-plateau scan, standalone box display.

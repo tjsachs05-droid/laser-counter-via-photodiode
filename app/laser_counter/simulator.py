@@ -28,7 +28,7 @@ class SimulatedFirmware:
     def __init__(
         self,
         rep_rate_hz: float = 5.0,
-        pulse_mv: float = -600.0,
+        pulse_mv: float = -1400.0,
         pulse_sd_mv: float = 40.0,
         weak_shot_fraction: float = 0.01,
         weak_mv: float = -150.0,
